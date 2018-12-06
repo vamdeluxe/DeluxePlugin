@@ -4,7 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using SimpleJSON;
 
-namespace DeluxePlugin {
+namespace DeluxePlugin.Powertools {
 	public class Focus : MVRScript {
 
         public static float DEFAULT_SCALE = 0.6f;
@@ -21,7 +21,7 @@ namespace DeluxePlugin {
                 focusOn.setCallbackFunction = DoSetFocus;
 
                 RegisterBool(focusOn);
-                CreateToggle(focusOn);
+                CreateToggle(focusOn).label = "Toggle Focus (F2)";
                 DoSetFocus(focusOn.val);
 
 
@@ -35,14 +35,6 @@ namespace DeluxePlugin {
 				SuperController.LogError("Exception caught: " + e);
 			}
 		}
-
-        void Update()
-        {
-            if (Input.GetKeyDown(KeyCode.BackQuote))
-            {
-                focusOn.SetVal(!focusOn.val);
-            }
-        }
 
         void DoSetFocus(bool on)
         {
@@ -108,6 +100,21 @@ namespace DeluxePlugin {
                 scaleMapping.Remove(controller);
             }
 
+        }
+
+        void Update()
+        {
+            try
+            {
+                if (Input.GetKeyDown(KeyCode.F2))
+                {
+                    focusOn.SetVal(!focusOn.val);
+                }
+            }
+            catch (Exception e)
+            {
+                SuperController.LogError("Exception caught: " + e);
+            }
         }
 
     }

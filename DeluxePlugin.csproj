@@ -280,11 +280,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Focus\" />
     <Folder Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Dollmaster\Activity.cs" />
-    <Compile Include="BodySwap.cs" />
+    <Compile Include="Bodyswap\BodySwap.cs" />
     <Compile Include="Dollmaster\Breathe.cs" />
     <Compile Include="Dollmaster\DollmasterUI.cs" />
     <Compile Include="Dollmaster\EmotionEngine.cs" />
@@ -296,13 +297,25 @@
     <Compile Include="Dollmaster\Shuffler.cs" />
     <Compile Include="Dollmaster\StateMachine.cs" />
     <Compile Include="Dollmaster\Utils.cs" />
+    <Compile Include="Experiments\BulkAudioLoader.cs" />
+    <Compile Include="Experiments\MorphTools.cs" />
+    <Compile Include="Experiments\RandomAudio.cs" />
+    <Compile Include="Experiments\Relax.cs" />
+    <Compile Include="Experiments\ShowSelectedControllerHUD.cs" />
     <Compile Include="Fashionista\Fashionista.cs" />
-    <Compile Include="Focus\Focus.cs" />
-    <Compile Include="TemplateSimple.cs" />
+    <Compile Include="Powertools\Focus.cs" />
+    <Compile Include="MorphMixer\MorphMixer.cs" />
+    <Compile Include="Powertools\Clone.cs" />
+    <Compile Include="Powertools\Delete.cs" />
+    <Compile Include="Templates\CycleForce.cs" />
+    <Compile Include="Templates\Template.cs" />
+    <Compile Include="Templates\TemplateSimple.cs" />
+    <Compile Include="Templates\TemplateWithSamples.cs" />
     <Compile Include="VAMasutra\Vamasutra.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Dollmaster\Dollmaster.cslist" />
+    <None Include="Powertools\PowerTools.cslist" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

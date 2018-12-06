@@ -9,21 +9,30 @@ using UnityEngine.UI;
 
 namespace DeluxePlugin
 {
-    class Vamasutra : MVRScript
+    public class Vamasutra : MVRScript
     {
-        List<UIDynamic> dynamicUI = new List<UIDynamic>();
-        string loadedSave = "";
-        string PATH_WHEN_LOADED = "";
+        private const string VAMAMSUTRA_UI_NAME = "VAMasutra Selector";
+        private const string POSITIONS_DROPDOWN_NAME = "Positions Dropdown";
+        private const string UI_ASSET_PREFAB = "assets/vamasutra.prefab";
+        private const string DROPDOWN_NAME = "Positions Dropdown";
 
-        public override void Init()
+        private string PATH_TO_UI_ASSET = Application.dataPath + "/../Dollmaster/vamasutra.assetbundle";
+
+        private List<UIDynamic> dynamicUI = new List<UIDynamic>();
+        private string loadedSave = "";
+        private string PATH_WHEN_LOADED = "";
+
+        public void Start()
         {
             try
             {
+                #region MVRUI Setup
                 PATH_WHEN_LOADED = SuperController.singleton.currentLoadDir;
 
                 CreateButton("Load").button.onClick.AddListener(() =>
                 {
-                    SuperController.singleton.GetScenePathDialog((string saveName) => {
+                    SuperController.singleton.GetScenePathDialog((string saveName) =>
+                    {
                         if (String.IsNullOrEmpty(saveName))
                         {
                             return;
@@ -42,10 +51,9 @@ namespace DeluxePlugin
                     }
                     LoadPosesAndMakeMenu(loadedSave);
                 });
+                #endregion
 
-
-                SetupUI();
-
+                WaitThenLoadUI();
             }
             catch (Exception e)
             {
@@ -54,90 +62,7 @@ namespace DeluxePlugin
         }
 
 
-        Dropdown dropdown;
-        string[] scenes;
-
-        void SetupUI()
-        {
-            GameObject dropdownGO = GameObject.Find("Positions Dropdown");
-            if (dropdownGO == null)
-            {
-                Debug.Log("no VAMasutra HUD found");
-                return;
-            }
-
-            if (dropdownGO != null)
-            {
-                dropdown = dropdownGO.GetComponent<Dropdown>();
-                dropdown.onValueChanged.RemoveAllListeners();
-                dropdown.onValueChanged.AddListener(OnSelected);
-            }
-
-            string vamasutraPath = PATH_WHEN_LOADED + "/VAMasutra/";
-
-            scenes = SuperController.singleton.GetFilesAtPath(vamasutraPath).ToList().Where((str)=>str.Contains(".json")).ToArray();
-
-            List<string> sceneNames = new List<string>();
-            List<Sprite> sprites = new List<Sprite>();
-            foreach (string scenePath in scenes)
-            {
-                string filename = GetFileNameWithoutExtension(scenePath);
-                string name = FirstLetterToUpper(filename);
-
-                sceneNames.Add(name);
-                string thumbnailPath = vamasutraPath + filename + ".jpg";
-                try
-                {
-
-                    //string dataAsString = SuperController.singleton.ReadFileIntoString(thumbnailPath);
-
-                    //  can't do this...
-                    //File.ReadAllBytes(thumbnailPath);
-
-                    //byte[] data = Encoding.ASCII.GetBytes(dataAsString);
-                    //Texture2D texture = new Texture2D(512, 512, TextureFormat.ARGB32, false);
-                    //texture.LoadImage(data);
-                    //Sprite sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0, 0));
-                    //sprites.Add(sprite);
-                }
-                catch(Exception e)
-                {
-
-                }
-
-                sprites.Add(null);
-            }
-
-
-
-            List<Dropdown.OptionData> options = new List<Dropdown.OptionData>();
-            for (int i = 0; i < sceneNames.Count; i++)
-            {
-                string name = sceneNames[i];
-                Sprite sprite = sprites[i];
-
-                Dropdown.OptionData data;
-                if (sprite != null)
-                {
-                    data = new Dropdown.OptionData(name, sprite);
-                }
-                else
-                {
-                    data = new Dropdown.OptionData(name);
-                }
-
-                options.Add(data);
-            }
-
-            dropdown.ClearOptions();
-            dropdown.AddOptions(options);
-        }
-
-        private void OnSelected(int id)
-        {
-            LoadPosesAndMakeMenu(scenes[id]);
-        }
-
+        #region Pose Loading
         void LoadPoseFromJSON(Atom atom, JSONClass asObject)
         {
             atom.PreRestore();
@@ -226,21 +151,20 @@ namespace DeluxePlugin
             });
         }
 
-
         //  Because we can't use System.IO.Path ........
 
-        public static readonly char DirectorySeparatorChar = '\\';
-        internal const string DirectorySeparatorCharAsString = "\\";
-        public static readonly char AltDirectorySeparatorChar = '/';
-        public static readonly char VolumeSeparatorChar = ':';
+        private static readonly char DirectorySeparatorChar = '\\';
+        private const string DirectorySeparatorCharAsString = "\\";
+        private static readonly char AltDirectorySeparatorChar = '/';
+        private static readonly char VolumeSeparatorChar = ':';
 
-        internal static void CheckInvalidPathChars(string path, bool checkAdditional = false)
+        private static void CheckInvalidPathChars(string path, bool checkAdditional = false)
         {
             if (path == null)
                 throw new ArgumentNullException("path");
         }
 
-        public static String GetFileName(String path)
+        private static String GetFileName(String path)
         {
             if (path != null)
             {
@@ -258,7 +182,7 @@ namespace DeluxePlugin
             return path;
         }
 
-        public static String GetFileNameWithoutExtension(String path)
+        private static String GetFileNameWithoutExtension(String path)
         {
             path = GetFileName(path);
             if (path != null)
@@ -272,7 +196,7 @@ namespace DeluxePlugin
             return null;
         }
 
-        public string FirstLetterToUpper(string str)
+        private string FirstLetterToUpper(string str)
         {
             if (str == null)
                 return null;
@@ -282,5 +206,145 @@ namespace DeluxePlugin
 
             return str.ToUpper();
         }
+        #endregion
+
+        #region UI Custom Asset
+
+        /// <summary>
+        /// This script loads way faster than the unity asset so we gotta wait...
+        /// </summary>
+        /// <returns></returns>
+        IEnumerator WaitThenLoadUI()
+        {
+            yield return new WaitForSeconds(2.0f);
+            StartCoroutine(CreateAssetAtom(VAMAMSUTRA_UI_NAME, PATH_TO_UI_ASSET, UI_ASSET_PREFAB, DROPDOWN_NAME, SetupUI));
+        }
+
+        delegate void AtomCreatedEvent(Atom atom);
+
+        IEnumerator CreateAssetAtom(string uniqueAtomName, string pathToAsset, string prefabName, string nameOfGameObjectToFind, AtomCreatedEvent OnAtomCreated)
+        {
+            yield return new WaitForSeconds(0.5f);
+
+            Atom createdAtom = GetAtomById(uniqueAtomName);
+            if (createdAtom == null)
+            {
+                SuperController.singleton.StartCoroutine(SuperController.singleton.AddAtomByType("CustomUnityAsset", uniqueAtomName, true));
+                yield return new WaitWhile(() => GetAtomById(uniqueAtomName) == null);
+                createdAtom = GetAtomById(uniqueAtomName);
+            }
+
+            JSONStorable storable = createdAtom.GetStorableByID("asset");
+            storable.SetUrlParamValue("assetUrl", pathToAsset);
+            storable.SetStringChooserParamValue("assetName", prefabName);
+
+
+            yield return new WaitWhile(() => GameObject.Find(nameOfGameObjectToFind) == null);
+            if (OnAtomCreated != null)
+            {
+                OnAtomCreated(createdAtom);
+            }
+        }
+
+
+        Dropdown dropdown;
+        string[] scenes;
+        Atom vamasutraUIAtom;
+
+        void SetupUI(Atom atom)
+        {
+            vamasutraUIAtom = atom;
+            vamasutraUIAtom.GetStorableByID("scale").SetFloatParamValue("scale", 0.5f);
+
+            GameObject dropdownGO = GameObject.Find(POSITIONS_DROPDOWN_NAME);
+            if (dropdownGO == null)
+            {
+                Debug.Log("no VAMasutra HUD found");
+                return;
+            }
+
+            if (dropdownGO != null)
+            {
+                dropdown = dropdownGO.GetComponent<Dropdown>();
+                dropdown.onValueChanged.RemoveAllListeners();
+                dropdown.onValueChanged.AddListener(OnSelected);
+            }
+
+            //string vamasutraPath = PATH_WHEN_LOADED + "/VAMasutra/";
+            string vamasutraPath = Application.dataPath + "/../Dollmaster/VAMasutra/";
+
+            scenes = SuperController.singleton.GetFilesAtPath(vamasutraPath).ToList().Where((str) => str.Contains(".json")).ToArray();
+
+            List<string> sceneNames = new List<string>();
+            List<Sprite> sprites = new List<Sprite>();
+            foreach (string scenePath in scenes)
+            {
+                string filename = GetFileNameWithoutExtension(scenePath);
+                string name = FirstLetterToUpper(filename);
+
+                sceneNames.Add(name);
+                string thumbnailPath = vamasutraPath + filename + ".jpg";
+                try
+                {
+
+                    //string dataAsString = SuperController.singleton.ReadFileIntoString(thumbnailPath);
+
+                    //  can't do this...
+                    //File.ReadAllBytes(thumbnailPath);
+
+                    //byte[] data = Encoding.ASCII.GetBytes(dataAsString);
+                    //Texture2D texture = new Texture2D(512, 512, TextureFormat.ARGB32, false);
+                    //texture.LoadImage(data);
+                    //Sprite sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0, 0));
+                    //sprites.Add(sprite);
+                }
+                catch (Exception e)
+                {
+
+                }
+
+                sprites.Add(null);
+            }
+
+
+
+            List<Dropdown.OptionData> options = new List<Dropdown.OptionData>();
+            for (int i = 0; i < sceneNames.Count; i++)
+            {
+                string name = sceneNames[i];
+                Sprite sprite = sprites[i];
+
+                Dropdown.OptionData data;
+                if (sprite != null)
+                {
+                    data = new Dropdown.OptionData(name, sprite);
+                }
+                else
+                {
+                    data = new Dropdown.OptionData(name);
+                }
+
+                options.Add(data);
+            }
+
+            dropdown.ClearOptions();
+            dropdown.AddOptions(options);
+        }
+
+        private void OnSelected(int id)
+        {
+            LoadPosesAndMakeMenu(scenes[id]);
+        }
+        #endregion
+
+
+        void OnDestroy()
+        {
+            if (vamasutraUIAtom != null)
+            {
+                SuperController.singleton.RemoveAtom(vamasutraUIAtom);
+            }
+        }
+
     }
 }
