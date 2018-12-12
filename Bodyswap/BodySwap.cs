@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,6 +12,7 @@ namespace DeluxePlugin {
         #region Morph Region Groups
         string[] defaultOff =
         {
+            "Pose Controls",
             "Actor",
             "Ears",
             "Eyes",
@@ -45,6 +47,29 @@ namespace DeluxePlugin {
             "Waist",
             "Genitalia",
             "Clothing"
+        };
+
+        string[] officialRegion =
+        {
+            "Actor",
+            "Arms",
+            "Body",
+            "Chest",
+            "Hip",
+            "Hands",
+            "Legs",
+            "Feet",
+            "Waist",
+            "Genitalia",
+            "Head",
+            "Eyes",
+            "Ears",
+            "Face",
+            "Head",
+            "Nose",
+            "Mouth",
+            "Neck",
+            "Upper_Body"
         };
         #endregion
 
@@ -240,6 +265,55 @@ namespace DeluxePlugin {
                 });
                 selectBody.buttonColor = Color.white;
 
+                UIDynamicButton selectPose = CreateButton("Select Pose Controls", true);
+                selectPose.button.onClick.AddListener(delegate () {
+                    foreach (KeyValuePair<string, UIDynamicToggle> entry in toggles)
+                    {
+                        entry.Value.toggle.isOn = entry.Key.Contains("Pose Controls");
+                    }
+                });
+                selectPose.buttonColor = Color.white;
+
+                UIDynamicButton selectOfficial = CreateButton("Select Official Controls", true);
+                selectOfficial.button.onClick.AddListener(delegate () {
+                    foreach (KeyValuePair<string, UIDynamicToggle> entry in toggles)
+                    {
+                        entry.Value.toggle.isOn = officialRegion.Any((str) => entry.Key == str);
+                    }
+                });
+                selectOfficial.buttonColor = Color.white;
+
+                UIDynamicButton selectInvert = CreateButton("Invert Selection", true);
+                selectInvert.button.onClick.AddListener(delegate () {
+                    foreach (KeyValuePair<string, UIDynamicToggle> entry in toggles)
+                    {
+                        entry.Value.toggle.isOn = !entry.Value.toggle.isOn;
+                    }
+                });
+                selectInvert.buttonColor = Color.white;
+
+                CreateSpacer(true);
+
+                //JSONStorableString stringFilter = new JSONStorableString("filter", "", (string value)=>
+                //{
+                //    if (string.IsNullOrEmpty(value))
+                //    {
+                //        return;
+                //    }
+
+                //    foreach (KeyValuePair<string, UIDynamicToggle> entry in toggles)
+                //    {
+                //        entry.Value.toggle.isOn = entry.Key.Contains(value);
+                //    }
+                //});
+
+                //stringFilter.inputField.enabled = true;
+
+                //UIDynamicTextField filterField = CreateTextField(stringFilter);
+                //filterField.enabled = true;
+                //filterField.UItext.enabled = true;
+
+
                 #endregion
 
                 #region Region Toggle Buttons
@@ -251,13 +325,10 @@ namespace DeluxePlugin {
                 morphControl.GetMorphDisplayNames().ForEach((name) =>
                 {
                     DAZMorph morph = morphControl.GetMorphByDisplayName(name);
-                    //Debug.Log("morph region " + morph.region + " group " + morph.group);
-                    if(morph.region.Contains("Pose Controls"))
-                    {
-                        return;
-                    }
                     regions.Add(morph.region);
                 });
+
+                Debug.Log(morphControl.GetMorphByDisplayName("MCMJulieFingersFistR").region);
 
 
                 foreach (string region in regions)
