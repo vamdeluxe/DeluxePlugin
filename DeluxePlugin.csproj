@@ -304,7 +304,7 @@
     <Compile Include="EmotionEngine\ExpressionCreator.cs" />
     <Compile Include="EmotionEngine\ExpressionStep.cs" />
     <Compile Include="EmotionEngine\MorphSelectUI.cs" />
-    <Compile Include="Experiments\BulkAudioLoader.cs" />
+    <Compile Include="Powertools\BulkAudioLoader.cs" />
     <Compile Include="Experiments\MorphTools.cs" />
     <Compile Include="Experiments\RandomAudio.cs" />
     <Compile Include="Experiments\Relax.cs" />
