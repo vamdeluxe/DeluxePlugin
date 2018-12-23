@@ -282,6 +282,7 @@
   <ItemGroup>
     <Folder Include="Focus\" />
     <Folder Include="Properties\" />
+    <Folder Include="Shared\" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Dollmaster\Activity.cs" />
@@ -297,24 +298,40 @@
     <Compile Include="Dollmaster\Shuffler.cs" />
     <Compile Include="Dollmaster\StateMachine.cs" />
     <Compile Include="Dollmaster\Utils.cs" />
+    <Compile Include="ContextMenu\ContextMenu.cs" />
+    <Compile Include="EmotionEngine\ExpressionBank.cs" />
+    <Compile Include="EmotionEngine\ExpressionAnimation.cs" />
+    <Compile Include="EmotionEngine\ExpressionCreator.cs" />
+    <Compile Include="EmotionEngine\ExpressionStep.cs" />
+    <Compile Include="EmotionEngine\MorphSelectUI.cs" />
     <Compile Include="Experiments\BulkAudioLoader.cs" />
     <Compile Include="Experiments\MorphTools.cs" />
     <Compile Include="Experiments\RandomAudio.cs" />
     <Compile Include="Experiments\Relax.cs" />
     <Compile Include="Experiments\ShowSelectedControllerHUD.cs" />
     <Compile Include="Fashionista\Fashionista.cs" />
+    <Compile Include="FullService\Poser.cs" />
+    <Compile Include="FullService\SceneBranch.cs" />
+    <Compile Include="FullService\SceneLoader.cs" />
+    <Compile Include="FullService\Sequence.cs" />
+    <Compile Include="PoseToPose\PoseToPose.cs" />
+    <Compile Include="Powertools\AlwaysEdit.cs" />
+    <Compile Include="Powertools\SelectRoot.cs" />
     <Compile Include="Powertools\Focus.cs" />
     <Compile Include="MorphMixer\MorphMixer.cs" />
     <Compile Include="Powertools\Clone.cs" />
     <Compile Include="Powertools\Delete.cs" />
     <Compile Include="Templates\CycleForce.cs" />
     <Compile Include="Templates\Template.cs" />
-    <Compile Include="Templates\TemplateSimple.cs" />
+    <Compile Include="Templates\TemplateStarter.cs" />
     <Compile Include="Templates\TemplateWithSamples.cs" />
     <Compile Include="VAMasutra\Vamasutra.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Dollmaster\Dollmaster.cslist" />
+    <None Include="EmotionEngine\ExpressionBank.cslist" />
+    <None Include="EmotionEngine\ExpressionCreator.cslist" />
+    <None Include="FullService\Fullservice.cslist" />
     <None Include="Powertools\PowerTools.cslist" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -44,7 +44,7 @@ namespace DeluxePlugin
                 oMeter = Utils.GetPluginStorableById(containingAtom, "OMeter") as OMeter;
 
                 gaze.SetReference(containingAtom.name, "eyeTargetControl");
-                gaze.SetLookAtPlayer(-0.70f * Vector3.up);
+                gaze.SetLookAtPlayer(-0.10f * Vector3.up);
                 gaze.SetGazeDuration(0.2f);
 
                 idle = new Idle(this);
@@ -172,7 +172,7 @@ namespace DeluxePlugin
                 if (headSelected == false)
                 {
                     activity.gaze.SetReference(activity.containingAtom.name, "eyeTargetControl");
-                    activity.gaze.SetLookAtPlayer(-1.5f * Vector3.up);
+                    activity.gaze.SetLookAtPlayer(-0.1f * Vector3.up);
                     activity.gaze.SetGazeDuration(0.3f);
                 }
             }
@@ -235,7 +235,7 @@ namespace DeluxePlugin
             {
                 Duration = refractoryDuration;
                 activity.emotionEngine.StartPanting(refractoryDuration);
-                activity.gaze.SetLookAtPlayer(-6.5f * Vector3.up);
+                activity.gaze.SetLookAtPlayer(-0.1f * Vector3.up);
                 activity.gaze.SetGazeDuration(1.0f);
             }
 

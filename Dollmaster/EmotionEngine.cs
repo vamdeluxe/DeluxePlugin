@@ -53,7 +53,8 @@ namespace DeluxePlugin
                     LoadExpressions(personalitiesMap[personality]);
                 });
                 CreatePopup(personalityChooser).popupPanelHeight = 400;
-                //RegisterStringChooser(personalityChooser);
+                personalityChooser.storeType = JSONStorableParam.StoreType.Full;
+                RegisterStringChooser(personalityChooser);
 
                 LoadExpressions(personalitiesMap[personalitiesMap.Keys.ToArray()[0]]);
 

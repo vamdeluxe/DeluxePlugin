@@ -53,7 +53,7 @@ namespace DeluxePlugin
                 });
                 #endregion
 
-                WaitThenLoadUI();
+                StartCoroutine(WaitThenLoadUI());
             }
             catch (Exception e)
             {

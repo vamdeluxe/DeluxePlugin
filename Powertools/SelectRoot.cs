@@ -11,19 +11,23 @@ namespace DeluxePlugin.Powertools
         FreeControllerV3 lastSelected;
         float lastPressedTime = 0;
         float doubleClickTime = 0.5f;
+        bool allowDoubleClick = false;
         void LateUpdate()
         {
             try
             {
-                if (Input.GetMouseButtonUp(0))
+                if (allowDoubleClick)
                 {
-                    if ((Time.time - lastPressedTime) < doubleClickTime && SuperController.singleton.GetSelectedController() == lastSelected)
+                    if (Input.GetMouseButtonUp(0))
                     {
-                        SelectMainController();
-                    }
+                        if ((Time.time - lastPressedTime) < doubleClickTime && SuperController.singleton.GetSelectedController() == lastSelected)
+                        {
+                            SelectMainController();
+                        }
 
-                    lastSelected = SuperController.singleton.GetSelectedController();
-                    lastPressedTime = Time.time;
+                        lastSelected = SuperController.singleton.GetSelectedController();
+                        lastPressedTime = Time.time;
+                    }
                 }
 
                 if (Input.GetMouseButtonUp(0) && (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)))

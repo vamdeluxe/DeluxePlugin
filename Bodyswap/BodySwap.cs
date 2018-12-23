@@ -102,8 +102,6 @@ namespace DeluxePlugin {
 
                 UpdateInitialMorphs();
 
-
-
                 #region Select from Scene or File
                 UIDynamicButton selectFileButton = null;
 
@@ -327,9 +325,6 @@ namespace DeluxePlugin {
                     DAZMorph morph = morphControl.GetMorphByDisplayName(name);
                     regions.Add(morph.region);
                 });
-
-                Debug.Log(morphControl.GetMorphByDisplayName("MCMJulieFingersFistR").region);
-
 
                 foreach (string region in regions)
                 {
