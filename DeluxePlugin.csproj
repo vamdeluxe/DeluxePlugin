@@ -304,6 +304,9 @@
     <Compile Include="EmotionEngine\ExpressionCreator.cs" />
     <Compile Include="EmotionEngine\ExpressionStep.cs" />
     <Compile Include="EmotionEngine\MorphSelectUI.cs" />
+    <Compile Include="PoseToPose\Keyframe.cs" />
+    <Compile Include="PoseToPose\StorableStringList.cs" />
+    <Compile Include="PoseToPose\UI.cs" />
     <Compile Include="Powertools\BulkAudioLoader.cs" />
     <Compile Include="Experiments\MorphTools.cs" />
     <Compile Include="Experiments\RandomAudio.cs" />
@@ -332,6 +335,7 @@
     <None Include="EmotionEngine\ExpressionBank.cslist" />
     <None Include="EmotionEngine\ExpressionCreator.cslist" />
     <None Include="FullService\Fullservice.cslist" />
+    <None Include="PoseToPose\PoseToPose.cslist" />
     <None Include="Powertools\PowerTools.cslist" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
