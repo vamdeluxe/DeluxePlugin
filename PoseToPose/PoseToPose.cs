@@ -18,6 +18,7 @@ namespace DeluxePlugin.PoseToPose
         JSONStorableBool uiVisible;
         JSONStorableString saveStore;
         JSONClass saveJSON;
+        JSONStorableBool lookAtCamera;
 
         AnimationPattern animationPattern;
 
@@ -382,6 +383,14 @@ namespace DeluxePlugin.PoseToPose
                 thickTimeline.useWorldSpace = false;
 
                 updateKeyframeLoop = StartCoroutine(UpdateEditingKeyframeLoop());
+
+                lookAtCamera = new JSONStorableBool("UILookAtCamera", true, (bool on)=>
+                {
+                    ui.lookAtCamera = on;
+                    keyUI.lookAtCamera = on;
+                });
+                RegisterBool(lookAtCamera);
+                CreateToggle(lookAtCamera);
             }
             catch (Exception e)
             {
@@ -453,7 +462,6 @@ namespace DeluxePlugin.PoseToPose
             }
 
             UpdateThickTimeline();
-            UpdateAnimationPose();
 
             if (SuperController.singleton.GetSelectedAtom() == animationPattern.containingAtom)
             {
@@ -466,6 +474,7 @@ namespace DeluxePlugin.PoseToPose
                 UpdateSelection();
                 UpdateTimelineSlider();
                 CheckStepAdded();
+                UpdateAnimationPose();
             }
         }
 
@@ -598,6 +607,10 @@ namespace DeluxePlugin.PoseToPose
             if (editingKeyframe != null)
             {
                 keyUI.canvas.transform.position = editingKeyframe.step.containingAtom.mainController.transform.position;
+                if (lookAtCamera.val == false)
+                {
+                    keyUI.canvas.transform.rotation = editingKeyframe.step.containingAtom.mainController.transform.rotation;
+                }
             }
             keyUI.canvas.enabled = editingKeyframe != null && keyUI.canvas.enabled;
         }

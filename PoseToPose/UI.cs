@@ -9,6 +9,8 @@ namespace DeluxePlugin.PoseToPose
 
         MVRScript plugin;
 
+        public bool lookAtCamera = true;
+
         public UI(MVRScript plugin, float scale = 0.002f)
         {
             this.plugin = plugin;
@@ -83,16 +85,18 @@ namespace DeluxePlugin.PoseToPose
 
         public void Update()
         {
+            if (lookAtCamera)
+            {
+                Transform cameraT = SuperController.singleton.lookCamera.transform;
+                Vector3 endPos = cameraT.position + cameraT.forward * 10000000.0f;
+                canvas.transform.LookAt(endPos, cameraT.up);
+            }
+            else
+            {
+                canvas.transform.localRotation = Quaternion.identity;
+            }
 
-            Transform cameraT = SuperController.singleton.lookCamera.transform;
-            Vector3 endPos = cameraT.position + cameraT.forward * 10000000.0f;
-            canvas.transform.LookAt(endPos, cameraT.up);
-            //canvas.transform.Rotate(0, 180, 0, Space.Self);
             canvas.enabled = SuperController.singleton.editModeToggle.isOn;
-
-            //Vector3 localEuler = canvas.transform.localEulerAngles;
-            //localEuler.z = 0;
-            //canvas.transform.localEulerAngles = localEuler;
         }
 
         public void OnDestroy()

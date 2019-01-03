@@ -304,6 +304,7 @@
     <Compile Include="EmotionEngine\ExpressionCreator.cs" />
     <Compile Include="EmotionEngine\ExpressionStep.cs" />
     <Compile Include="EmotionEngine\MorphSelectUI.cs" />
+    <Compile Include="Outliner\Outliner.cs" />
     <Compile Include="PoseToPose\Keyframe.cs" />
     <Compile Include="PoseToPose\StorableStringList.cs" />
     <Compile Include="PoseToPose\UI.cs" />
