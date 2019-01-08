@@ -1,0 +1,46 @@
+{
+  "bodyUI": [
+    {
+      "title": "Waist",
+      "bone": "hip",
+      "search": "waist",
+      "offset": { "x": -0.3, "y": 0.00, "z": -0.4 }
+    },
+    {
+      "title": "Chest",
+      "bone": "chest",
+      "search": "chest breast",
+      "offset": { "x": 0.5, "y": 0.0, "z": 0.3 }
+    },
+    {
+      "title": "Genitals",
+      "bone": "pelvis",
+      "search": "genital",
+      "offset": { "x": 0.5, "y": 0.0, "z": 0.3 }
+    },
+    {
+      "title": "Head",
+      "bone": "head",
+      "search": "head",
+      "offset": { "x": -0.3, "y": 0.2, "z": -0.3 }
+    },
+    {
+      "title": "Face",
+      "bone": "neck",
+      "search": "face",
+      "offset": { "x": -0.3, "y": 0.2, "z": -0.3 }
+    },
+    {
+      "title": "Legs",
+      "bone": "rShin",
+      "search": "leg",
+      "offset": { "x": -0.3, "y": 0.2, "z": -0.3 }
+    },
+    {
+      "title": "Feet",
+      "bone": "rFoot",
+      "search": "feet foot",
+      "offset": { "x": -0.3, "y": 0.2, "z": -0.3 }
+    }
+  ]
+}

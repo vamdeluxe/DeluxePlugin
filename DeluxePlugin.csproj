@@ -285,6 +285,15 @@
     <Folder Include="Shared\" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AnimationGraph\AnimationGraph.cs" />
+    <Compile Include="AnimationGraph\Node.cs" />
+    <Compile Include="AnimationGraph\Transition.cs" />
+    <Compile Include="AnimationGraph\UI.cs" />
+    <Compile Include="ChanceToTrigger\ChanceToTrigger.cs" />
+    <Compile Include="DollMaker\Appearance.cs" />
+    <Compile Include="DollMaker\DMBase.cs" />
+    <Compile Include="DollMaker\DollMaker.cs" />
+    <Compile Include="DollMaker\UI.cs" />
     <Compile Include="Dollmaster\Activity.cs" />
     <Compile Include="Bodyswap\BodySwap.cs" />
     <Compile Include="Dollmaster\Breathe.cs" />
@@ -329,9 +338,13 @@
     <Compile Include="Templates\Template.cs" />
     <Compile Include="Templates\TemplateStarter.cs" />
     <Compile Include="Templates\TemplateWithSamples.cs" />
+    <Compile Include="Arousal\Arousal.cs" />
+    <Compile Include="ThrustControl\ThrustControl.cs" />
     <Compile Include="VAMasutra\Vamasutra.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="AnimationGraph\AnimationGraph.cslist" />
+    <None Include="DollMaker\ADD_ME.cslist" />
     <None Include="Dollmaster\Dollmaster.cslist" />
     <None Include="EmotionEngine\ExpressionBank.cslist" />
     <None Include="EmotionEngine\ExpressionCreator.cslist" />

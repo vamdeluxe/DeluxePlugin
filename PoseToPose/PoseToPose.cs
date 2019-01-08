@@ -52,7 +52,10 @@ namespace DeluxePlugin.PoseToPose
         /// <summary>
         /// For copy paste.
         /// </summary>
-        JSONClass copiedPose;
+        static JSONClass copiedPose;
+
+        static Vector3 copiedPosition;
+        static Quaternion copiedRotation;
 
         UI ui;
         UI keyUI;
@@ -288,6 +291,44 @@ namespace DeluxePlugin.PoseToPose
                     UpdateSaveStore();
                 });
 
+                UIDynamicButton copyControllerButton = keyUI.CreateButton("Copy Control", 200, 60);
+                copyControllerButton.transform.localPosition = new Vector3(-150, -120, 0);
+                copyControllerButton.button.onClick.AddListener(() =>
+                {
+                    if (editingKeyframe == null)
+                    {
+                        return;
+                    }
+
+                    FreeControllerV3 selectedController = SuperController.singleton.GetSelectedController();
+                    if (selectedController  == null)
+                    {
+                        return;
+                    }
+
+                    copiedPosition = selectedController.transform.position;
+                    copiedRotation = selectedController.transform.rotation;
+                });
+
+                UIDynamicButton pasteControllerButton = keyUI.CreateButton("Paste Control", 200, 60);
+                pasteControllerButton.transform.localPosition = new Vector3(50, -120, 0);
+                pasteControllerButton.button.onClick.AddListener(() =>
+                {
+                    if (editingKeyframe == null)
+                    {
+                        return;
+                    }
+
+                    FreeControllerV3 selectedController = SuperController.singleton.GetSelectedController();
+                    if (selectedController == null)
+                    {
+                        return;
+                    }
+
+                    selectedController.transform.position = copiedPosition;
+                    selectedController.transform.rotation = copiedRotation;
+                });
+
                 #endregion
 
                 #region Plugin (Debug) UI
@@ -391,6 +432,24 @@ namespace DeluxePlugin.PoseToPose
                 });
                 RegisterBool(lookAtCamera);
                 CreateToggle(lookAtCamera);
+
+                person.freeControllers.ToList().ForEach((fc) =>
+                {
+                    JSONStorableBool animateControl = new JSONStorableBool(fc.name, true);
+                    RegisterBool(animateControl);
+                    CreateToggle(animateControl, true);
+                });
+
+                CreateButton("Reverse Animation").button.onClick.AddListener(() =>
+                {
+                    List<AnimationStep> reversedSteps = animationPattern.steps.ToList();
+                    reversedSteps.Reverse();
+
+                    animationPattern.steps = reversedSteps.ToArray();
+                    animationPattern.RecalculateTimeSteps();
+
+                    keyframes.Reverse();
+                });
             }
             catch (Exception e)
             {
@@ -442,6 +501,13 @@ namespace DeluxePlugin.PoseToPose
                     step.DestroyStep();
                 }
             });
+
+            if (SuperController.singleton.GetSelectedAtom() != containingAtom)
+            {
+                uiVisible.SetVal(false);
+                keyUI.canvas.enabled = false;
+                ui.canvas.enabled = false;
+            }
         }
 
         void Update()
@@ -476,6 +542,11 @@ namespace DeluxePlugin.PoseToPose
                 CheckStepAdded();
                 UpdateAnimationPose();
             }
+
+            if (lookAtCamera.val == true)
+            {
+                LayoutKeys();
+            }
         }
 
         void OnKeyframeSelected(Keyframe keyframe)
@@ -509,8 +580,14 @@ namespace DeluxePlugin.PoseToPose
 
         void OnDestroy()
         {
-            ui.OnDestroy();
-            keyUI.OnDestroy();
+            if (ui != null)
+            {
+                ui.OnDestroy();
+            }
+            if (keyUI != null)
+            {
+                keyUI.OnDestroy();
+            }
             if (updateKeyframeLoop!=null)
             {
                 StopCoroutine(updateKeyframeLoop);
@@ -527,12 +604,22 @@ namespace DeluxePlugin.PoseToPose
         {
             int index = 0;
 
+            if (lookAtCamera.val == true)
+            {
+                containingAtom.mainController.transform.LookAt(SuperController.singleton.lookCamera.transform);
+            }
+
             keyframes.ForEach((key) =>
             {
                 index++;
                 FreeControllerV3 stepMC = key.step.containingAtom.mainController;
                 Vector3 position = animationPattern.containingAtom.mainController.transform.position;
-                stepMC.transform.position = position - new Vector3(index * 0.2f, 0, 0);
+                //Vector3 eulerAngles = animationPattern.containingAtom.mainController.transform.eulerAngles;
+                //stepMC.transform.position = position;
+                //stepMC.transform.eulerAngles = eulerAngles;
+                //stepMC.transform.localEulerAngles = Vector3.zero;
+                //stepMC.transform.localPosition = new Vector3(0, 0, 0);
+                stepMC.transform.position = animationPattern.containingAtom.mainController.transform.TransformPoint(new Vector3(-index * 0.2f, 0, 0));
             });
         }
 
@@ -1011,6 +1098,14 @@ namespace DeluxePlugin.PoseToPose
                 if(isBone && transformBones == false)
                 {
                     continue;
+                }
+
+                if (!isBone)
+                {
+                    if (GetBoolParamValue(id) == false)
+                    {
+                        continue;
+                    }
                 }
 
                 JSONStorable storable = person.GetStorableByID(id);

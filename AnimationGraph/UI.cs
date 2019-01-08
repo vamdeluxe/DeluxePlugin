@@ -1,19 +1,21 @@
-﻿using System.Linq;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
-namespace DeluxePlugin.PoseToPose
+using UnityEngine.XR;
+
+namespace DeluxePlugin.AnimationGraph
 {
     public class UI
     {
         public Canvas canvas;
 
-        MVRScript plugin;
+        public MVRScript plugin;
 
-        public bool lookAtCamera = true;
+        float UIScale = 1;
 
         public UI(MVRScript plugin, float scale = 0.002f)
         {
             this.plugin = plugin;
+            this.UIScale = scale;
 
             GameObject canvasObject = new GameObject();
             canvas = canvasObject.AddComponent<Canvas>();
@@ -50,6 +52,7 @@ namespace DeluxePlugin.PoseToPose
 
             UIDynamicButton uiButton = button.GetComponent<UIDynamicButton>();
             uiButton.label = name;
+
             return uiButton;
         }
 
@@ -73,19 +76,44 @@ namespace DeluxePlugin.PoseToPose
             return uiPopup;
         }
 
+        public RectTransform CreateHorizontalLayout(float width = 300, float height = 500)
+        {
+            GameObject go = new GameObject();
+            RectTransform rt = go.AddComponent<RectTransform>();
+            ContentSizeFitter csf = go.AddComponent<ContentSizeFitter>();
+            csf.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            HorizontalLayoutGroup hlg = go.AddComponent<HorizontalLayoutGroup>();
+            hlg.childControlWidth = false;
+            hlg.childForceExpandHeight = true;
+            hlg.childForceExpandWidth = true;
+
+            rt.SetParent(canvas.transform, false);
+            rt.sizeDelta = new Vector2(width, height);
+            return rt;
+        }
+
+        public RectTransform CreateScrollRect(float width = 300, float height = 500)
+        {
+            GameObject vGo = new GameObject();
+            vGo.AddComponent<VerticalLayoutGroup>();
+            RectTransform vRT = vGo.GetComponent<RectTransform>();
+            vRT.SetParent(canvas.transform, false);
+            return vRT;
+        }
+
         private void ConfigureTransform(Transform t, float width, float height)
         {
             t.transform.position = Vector3.zero;
             t.SetParent(canvas.transform, false);
 
-            RectTransform timeSliderRT = t.GetComponent<RectTransform>();
-            timeSliderRT.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, width);
-            timeSliderRT.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, height);
+            RectTransform rt = t.GetComponent<RectTransform>();
+            rt.sizeDelta = new Vector2(width, height);
         }
 
         public void Update()
         {
-            if (lookAtCamera)
+            if (XRSettings.enabled == false)
             {
                 Transform cameraT = SuperController.singleton.lookCamera.transform;
                 Vector3 endPos = cameraT.position + cameraT.forward * 10000000.0f;
@@ -93,19 +121,16 @@ namespace DeluxePlugin.PoseToPose
             }
             else
             {
-                canvas.transform.localRotation = Quaternion.identity;
+                canvas.transform.localEulerAngles = new Vector3(0, 180, 0);
             }
 
-            canvas.enabled = SuperController.singleton.editModeToggle.isOn;
+            canvas.transform.localScale = Vector3.one * plugin.containingAtom.GetStorableByID("scale").GetFloatParamValue("scale") * UIScale;
         }
 
         public void OnDestroy()
         {
             SuperController.singleton.RemoveCanvas(canvas);
-            if (canvas.gameObject != null)
-            {
-                GameObject.Destroy(canvas.gameObject);
-            }
+            GameObject.Destroy(canvas.gameObject);
         }
     }
 }
