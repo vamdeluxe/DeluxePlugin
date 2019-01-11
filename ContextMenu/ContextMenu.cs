@@ -8,9 +8,11 @@ namespace DeluxePlugin
 {
     public class ContextMenu: MVRScript
     {
+        protected Dictionary<string, float> morphDict = new Dictionary<string, float>();
+
         List<Atom> buttons = new List<Atom>();
         int buttonIndex = 0;
-
+        protected float Yshift = 0f;
         const float BUTTON_SPACING = .07f;
 
         public override void Init()
@@ -23,6 +25,32 @@ namespace DeluxePlugin
             {
                 SuperController.LogError("Exception caught: " + e);
             }
+        }
+
+        private void saveMorphs()
+        {
+            JSONStorable geometry = containingAtom.GetStorableByID("geometry");
+            DAZCharacterSelector character = geometry as DAZCharacterSelector;
+            GenerateDAZMorphsControlUI morphControl = character.morphsControlUI;
+
+            morphControl.GetMorphDisplayNames().ForEach((name) =>
+            {
+                morphDict[name] = morphControl.GetMorphByDisplayName(name).morphValue;
+
+            });
+        }
+
+        private void loadMorphs()
+        {
+            JSONStorable geometry = containingAtom.GetStorableByID("geometry");
+            DAZCharacterSelector character = geometry as DAZCharacterSelector;
+            GenerateDAZMorphsControlUI morphControl = character.morphsControlUI;
+
+            morphControl.GetMorphDisplayNames().ForEach((name) =>
+            {
+                morphControl.GetMorphByDisplayName(name).morphValue = morphDict[name];
+
+            });
         }
 
         IEnumerator Setup()
@@ -46,6 +74,20 @@ namespace DeluxePlugin
                 SuperController.singleton.ShowMainHUD();
                 SuperController.singleton.SelectController(containingAtom.mainController);
                 containingAtom.LoadPhysicalPresetDialog();
+            });
+
+            CreateWorldButton("Quicksave Morphs", () =>
+            {
+                // SuperController.singleton.ShowMainHUD();
+                // SuperController.singleton.SelectController(containingAtom.mainController);
+                saveMorphs();
+            });
+
+            CreateWorldButton("Quickload Morphs", () =>
+            {
+                // SuperController.singleton.ShowMainHUD();
+                // SuperController.singleton.SelectController(containingAtom.mainController);
+                loadMorphs();
             });
         }
 
@@ -122,8 +164,7 @@ namespace DeluxePlugin
             }
 
             atom.mainController.transform.SetPositionAndRotation(controller.transform.position, controller.transform.rotation);
-            //atom.mainController.transform.Translate(0, .3f, 0, Space.Self);
-            atom.mainController.transform.Translate(.4f, 0, 0, Space.Self);
+            atom.mainController.transform.Translate(.42f, Yshift, 0, Space.Self);
             atom.mainController.transform.Translate(0, -BUTTON_SPACING * index, 0, Space.World);
             atom.mainController.transform.LookAt(SuperController.singleton.lookCamera.transform);
 
@@ -135,7 +176,13 @@ namespace DeluxePlugin
         {
             try
             {
-                bool visibilityState = SuperController.singleton.GetSelectedAtom() == containingAtom;
+              bool visibilityState = SuperController.singleton.GetSelectedAtom() == containingAtom;
+
+              if (visibilityState && SuperController.singleton.GetSelectedController().name == "control")
+                Yshift = 1.4f;
+              else
+                Yshift = 0;
+
                 bool visChanged = false;
                 if (visibilityState != lastVisibility)
                 {
