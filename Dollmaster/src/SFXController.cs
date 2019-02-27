@@ -121,7 +121,7 @@ namespace DeluxePlugin.Dollmaster
             }
         }
 
-        protected override void OnContainingAtomRenamed(string newName, string oldName)
+        protected override void OnContainingAtomRenamed(string oldName, string newName)
         {
             if (audioAtom != null)
             {

@@ -35,6 +35,8 @@ namespace DeluxePlugin.Dollmaster
 
         public AudioSourceControl headAudioSource;
 
+        string lastAtomName = "";
+
         public override void Init()
         {
             try
@@ -44,6 +46,8 @@ namespace DeluxePlugin.Dollmaster
                     SuperController.LogError("Please add Doll Master to a Person atom");
                     return;
                 }
+
+                lastAtomName = containingAtom.uid;
 
                 PLUGIN_PATH = GetPluginPath();
                 ASSETS_PATH = PLUGIN_PATH + "/Assets";
@@ -92,6 +96,8 @@ namespace DeluxePlugin.Dollmaster
 
                 CreateSpacer().height = 200;
 
+                //SuperController singleton = SuperController.singleton;
+                //singleton.onAtomUIDRenameHandlers = (SuperController.OnAtomUIDRename)Delegate.Combine(singleton.onAtomUIDRenameHandlers, new SuperController.OnAtomUIDRename(HandleRename));
 
             }
             catch(Exception e)
@@ -180,6 +186,13 @@ namespace DeluxePlugin.Dollmaster
                     module.Update();
                 });
 
+                //  name change handlers are breaking for some reason
+                //  hack around this...
+                if (lastAtomName != containingAtom.uid)
+                {
+                    HandleRename(lastAtomName, containingAtom.uid);
+                    lastAtomName = containingAtom.uid;
+                }
             }
             catch(Exception e)
             {
@@ -205,8 +218,12 @@ namespace DeluxePlugin.Dollmaster
                 {
                     personality.OnDestroy();
                 }
+
+                //SuperController singleton = SuperController.singleton;
+                //singleton.onAtomUIDRenameHandlers = (SuperController.OnAtomUIDRename)Delegate.Remove(singleton.onAtomUIDRenameHandlers, new SuperController.OnAtomUIDRename(HandleRename));
+
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 SuperController.LogError("Exception caught: " + e);
             }
@@ -295,6 +312,14 @@ namespace DeluxePlugin.Dollmaster
                 return null;
             }
             return nac;
+        }
+
+        protected void HandleRename(string oldId, string newId)
+        {
+            modules.ForEach((module) =>
+            {
+                module.HandleRename(oldId, newId);
+            });
         }
     }
 }

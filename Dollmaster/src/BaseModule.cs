@@ -13,8 +13,6 @@ namespace DeluxePlugin.Dollmaster
         protected Atom atom;
         protected UI ui;
 
-        string oldContainerName;
-
         List<Atom> generatedAtoms = new List<Atom>();
 
         public BaseModule(DollmasterPlugin dm)
@@ -24,21 +22,11 @@ namespace DeluxePlugin.Dollmaster
             ui = dm.ui;
 
             dm.modules.Add(this);
-
-            oldContainerName = dm.containingAtom.uid;
-            SuperController.singleton.onAtomUIDRenameHandlers += HandleRename;
         }
 
-        void HandleRename(string old, string newName)
+        public void HandleRename(string old, string newName)
         {
-            if (old != oldContainerName)
-            {
-                return;
-            }
-
-            OnContainingAtomRenamed(newName, old);
-
-            oldContainerName = newName;
+            OnContainingAtomRenamed(old, newName);
         }
 
         protected virtual IEnumerator CreateAtom(string atomType, string prefix, Action<Atom> onAtomCreated, bool keep=false)
@@ -69,7 +57,7 @@ namespace DeluxePlugin.Dollmaster
             return prefix + " " + suffix;
         }
 
-        protected virtual void OnContainingAtomRenamed(string newName, string oldName)
+        protected virtual void OnContainingAtomRenamed(string oldName, string newName)
         {
 
         }

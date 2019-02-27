@@ -117,6 +117,8 @@ namespace DeluxePlugin.DollMaker
                 SuperController.singleton.RemoveAtom(atom);
             });
             generatedAtoms.Clear();
+
+            SuperController.singleton.onAtomUIDRenameHandlers -= HandleRename;
         }
     }
 }

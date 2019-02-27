@@ -216,14 +216,15 @@ namespace DeluxePlugin.Dollmaster
             SetPoseUIActive(false);
         }
 
-        protected override void OnContainingAtomRenamed(string newName, string oldName)
+        protected override void OnContainingAtomRenamed(string oldName, string newName)
         {
+            //Debug.Log("atom name changed from " + oldName + " to " + newName);
             montages.ForEach((montage) =>
             {
                 for(int i=0; i < montage.montageJSON.Count; i++)
                 {
                     JSONClass atomNode = montage.montageJSON[i].AsObject;
-                    if (atomNode["id"] == oldName)
+                    if (atomNode["id"].Value == oldName)
                     {
                         atomNode["id"] = newName;
                     }
