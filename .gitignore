@@ -336,3 +336,6 @@ ASALocalRun/
 
 # Local History for Visual Studio
 .localhistory/
+
+# Assets that should be ignored due to copyright risk
+Dollmaster/Assets/**
