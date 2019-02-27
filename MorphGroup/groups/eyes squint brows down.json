@@ -1,0 +1,56 @@
+{ 
+   "morphs" : [ 
+      { 
+         "name" : "Brow Down", 
+         "value" : "0.5859559"
+      }, 
+      { 
+         "name" : "Brow Down Left", 
+         "value" : "0.5859559"
+      }, 
+      { 
+         "name" : "Brow Down Right", 
+         "value" : "0.5859559"
+      }, 
+      { 
+         "name" : "Brow Inner Down", 
+         "value" : "0.2413924"
+      }, 
+      { 
+         "name" : "Brow Inner Down Left", 
+         "value" : "0.2413924"
+      }, 
+      { 
+         "name" : "Brow Inner Down Right", 
+         "value" : "0.2413924"
+      }, 
+      { 
+         "name" : "Eyes Closed", 
+         "value" : "0.1087994"
+      }, 
+      { 
+         "name" : "Eyes Closed Left", 
+         "value" : "0.1087994"
+      }, 
+      { 
+         "name" : "Eyes Closed Right", 
+         "value" : "0.1087994"
+      }, 
+      { 
+         "name" : "Eyes Squint", 
+         "value" : "0.4715419"
+      }, 
+      { 
+         "name" : "Eyes Squint Left", 
+         "value" : "0.4715419"
+      }, 
+      { 
+         "name" : "Eyes Squint Right", 
+         "value" : "0.4715419"
+      }, 
+      { 
+         "name" : "Nose Wrinkle", 
+         "value" : "0.4046465"
+      }
+   ]
+}

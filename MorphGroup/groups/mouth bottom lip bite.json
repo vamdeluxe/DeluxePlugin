@@ -1,0 +1,52 @@
+{ 
+   "morphs" : [ 
+      { 
+         "name" : "Lip Bottom Down Left", 
+         "value" : "0.3925255"
+      }, 
+      { 
+         "name" : "Lip Bottom In", 
+         "value" : "0.4533595"
+      }, 
+      { 
+         "name" : "Lip Bottom In Left", 
+         "value" : "0.4533595"
+      }, 
+      { 
+         "name" : "Lip Bottom In Right", 
+         "value" : "0.4533595"
+      }, 
+      { 
+         "name" : "Lip Bottom Up", 
+         "value" : "0.4171"
+      }, 
+      { 
+         "name" : "Lip Bottom Up Left", 
+         "value" : "0.4171"
+      }, 
+      { 
+         "name" : "Lip Bottom Up Right", 
+         "value" : "0.4171"
+      }, 
+      { 
+         "name" : "Lip Top Up", 
+         "value" : "0.4110351"
+      }, 
+      { 
+         "name" : "Lip Top Up Left", 
+         "value" : "0.4110351"
+      }, 
+      { 
+         "name" : "Lip Top Up Right", 
+         "value" : "0.4110351"
+      }, 
+      { 
+         "name" : "Tongue In-Out", 
+         "value" : "0.8825319"
+      }, 
+      { 
+         "name" : "Mouth Open", 
+         "value" : "0.6800565"
+      }
+   ]
+}

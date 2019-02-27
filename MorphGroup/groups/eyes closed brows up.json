@@ -1,0 +1,28 @@
+{ 
+   "morphs" : [ 
+      { 
+         "name" : "Brow Up", 
+         "value" : "0.8881979"
+      }, 
+      { 
+         "name" : "Brow Up Left", 
+         "value" : "0.8881979"
+      }, 
+      { 
+         "name" : "Brow Up Right", 
+         "value" : "0.8881979"
+      }, 
+      { 
+         "name" : "Eyes Closed", 
+         "value" : "0.9395624"
+      }, 
+      { 
+         "name" : "Eyes Closed Left", 
+         "value" : "0.9395624"
+      }, 
+      { 
+         "name" : "Eyes Closed Right", 
+         "value" : "0.9395624"
+      }
+   ]
+}

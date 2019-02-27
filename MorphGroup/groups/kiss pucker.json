@@ -1,0 +1,40 @@
+{ 
+   "morphs" : [ 
+      { 
+         "name" : "Brow Squeeze", 
+         "value" : "0.3199859"
+      }, 
+      { 
+         "name" : "Brow Up", 
+         "value" : "0.7673033"
+      }, 
+      { 
+         "name" : "Brow Up Left", 
+         "value" : "0.7673033"
+      }, 
+      { 
+         "name" : "Brow Up Right", 
+         "value" : "0.7673033"
+      }, 
+      { 
+         "name" : "Concentrate", 
+         "value" : "0.3320724"
+      }, 
+      { 
+         "name" : "Eyes Closed", 
+         "value" : "0.8277582"
+      }, 
+      { 
+         "name" : "Eyes Closed Left", 
+         "value" : "0.8277582"
+      }, 
+      { 
+         "name" : "Eyes Closed Right", 
+         "value" : "0.8277582"
+      }, 
+      { 
+         "name" : "Lips Pucker", 
+         "value" : "1"
+      }
+   ]
+}

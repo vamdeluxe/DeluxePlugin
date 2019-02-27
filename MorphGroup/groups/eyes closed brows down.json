@@ -1,0 +1,36 @@
+{ 
+   "morphs" : [ 
+      { 
+         "name" : "Brow Down", 
+         "value" : "0.8761274"
+      }, 
+      { 
+         "name" : "Brow Down Left", 
+         "value" : "0.8761274"
+      }, 
+      { 
+         "name" : "Brow Down Right", 
+         "value" : "0.8761274"
+      }, 
+      { 
+         "name" : "Brow Squeeze", 
+         "value" : "0.1511306"
+      }, 
+      { 
+         "name" : "Eyes Closed", 
+         "value" : "0.9395624"
+      }, 
+      { 
+         "name" : "Eyes Closed Left", 
+         "value" : "0.9395624"
+      }, 
+      { 
+         "name" : "Eyes Closed Right", 
+         "value" : "0.9395624"
+      }, 
+      { 
+         "name" : "Nose Wrinkle", 
+         "value" : "0.2293164"
+      }
+   ]
+}

@@ -1,0 +1,48 @@
+{ 
+   "morphs" : [ 
+      { 
+         "name" : "Brow Down", 
+         "value" : "0.598055"
+      }, 
+      { 
+         "name" : "Brow Down Left", 
+         "value" : "0.598055"
+      }, 
+      { 
+         "name" : "Brow Down Right", 
+         "value" : "0.598055"
+      }, 
+      { 
+         "name" : "Brow Inner Down", 
+         "value" : "0.440881"
+      }, 
+      { 
+         "name" : "Brow Inner Down Left", 
+         "value" : "0.440881"
+      }, 
+      { 
+         "name" : "Brow Inner Down Right", 
+         "value" : "0.440881"
+      }, 
+      { 
+         "name" : "Eyes Closed", 
+         "value" : "-8.910894E-05"
+      }, 
+      { 
+         "name" : "Eyes Squint", 
+         "value" : "-0.4170822"
+      }, 
+      { 
+         "name" : "Eyes Squint Left", 
+         "value" : "-0.4170822"
+      }, 
+      { 
+         "name" : "Eyes Squint Right", 
+         "value" : "-0.4170822"
+      }, 
+      { 
+         "name" : "Nose Wrinkle", 
+         "value" : "0.4046465"
+      }
+   ]
+}

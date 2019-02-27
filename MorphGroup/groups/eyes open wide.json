@@ -1,0 +1,20 @@
+{ 
+   "morphs" : [ 
+      { 
+         "name" : "Eyes Closed", 
+         "value" : "-0.1087883"
+      }, 
+      { 
+         "name" : "Eyes Closed Left", 
+         "value" : "-0.1087883"
+      }, 
+      { 
+         "name" : "Eyes Closed Right", 
+         "value" : "-0.1087883"
+      }, 
+      { 
+         "name" : "Tongue Center Dip", 
+         "value" : "0"
+      }
+   ]
+}

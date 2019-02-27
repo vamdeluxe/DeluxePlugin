@@ -1,0 +1,76 @@
+{ 
+   "morphs" : [ 
+      { 
+         "name" : "Left Fingers Fist", 
+         "value" : "0"
+      }, 
+      { 
+         "name" : "Left Thumb Fist", 
+         "value" : "0"
+      }, 
+      { 
+         "name" : "Left Hand Fist", 
+         "value" : "0"
+      }, 
+      { 
+         "name" : "Right Fingers Fist", 
+         "value" : "0"
+      }, 
+      { 
+         "name" : "Right Thumb Fist", 
+         "value" : "0"
+      }, 
+      { 
+         "name" : "Right Hand Fist", 
+         "value" : "0"
+      }, 
+      { 
+         "name" : "Brow Up", 
+         "value" : "0.5557528"
+      }, 
+      { 
+         "name" : "Brow Up Left", 
+         "value" : "0.5557528"
+      }, 
+      { 
+         "name" : "Brow Up Right", 
+         "value" : "0.5557528"
+      }, 
+      { 
+         "name" : "Eyes Closed", 
+         "value" : "0.8338319"
+      }, 
+      { 
+         "name" : "Eyes Closed Left", 
+         "value" : "0.8338319"
+      }, 
+      { 
+         "name" : "Eyes Closed Right", 
+         "value" : "0.8338319"
+      }, 
+      { 
+         "name" : "Tongue Center Dip", 
+         "value" : "0"
+      }, 
+      { 
+         "name" : "Tongue Curl", 
+         "value" : "-0.3264044"
+      }, 
+      { 
+         "name" : "Tongue In-Out", 
+         "value" : "-1"
+      }, 
+      { 
+         "name" : "Tongue Length", 
+         "value" : "0.0574249"
+      }, 
+      { 
+         "name" : "Tongue Raise-Lower", 
+         "value" : "0.03788463"
+      }, 
+      { 
+         "name" : "Mouth Open", 
+         "value" : "1.720548"
+      }
+   ]
+}

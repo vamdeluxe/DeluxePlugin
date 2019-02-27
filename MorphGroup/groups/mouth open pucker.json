@@ -1,0 +1,36 @@
+{ 
+   "morphs" : [ 
+      { 
+         "name" : "Cheeks Balloon Pucker", 
+         "value" : "-0.07257161"
+      }, 
+      { 
+         "name" : "Lips Pucker", 
+         "value" : "-0.07249838"
+      }, 
+      { 
+         "name" : "Lips Pucker Wide", 
+         "value" : "0.3808272"
+      }, 
+      { 
+         "name" : "Mouth Narrow", 
+         "value" : "0.4710914"
+      }, 
+      { 
+         "name" : "Mouth Narrow Left", 
+         "value" : "0.4710914"
+      }, 
+      { 
+         "name" : "Mouth Narrow Right", 
+         "value" : "0.4710914"
+      }, 
+      { 
+         "name" : "Mouth Open", 
+         "value" : "-0.5"
+      }, 
+      { 
+         "name" : "Mouth Open Wide", 
+         "value" : "1.088109"
+      }
+   ]
+}
