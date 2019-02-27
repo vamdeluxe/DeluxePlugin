@@ -13,6 +13,7 @@ namespace DeluxePlugin.EmotionEngine
         const float ANIMATION_LERP_RATE = 30.0f;
         const float TRANSITION_ANIMATION_DURATION = 0.1f;
         const float FADE_OUT_TIME = 0.8f;
+        const float COOLDOWN_DELAY = 4.0f;
 
         public string audio = "";
         public NamedAudioClip nac;
@@ -151,6 +152,12 @@ namespace DeluxePlugin.EmotionEngine
             if (t >= 1)
             {
                 isPlaying = false;
+
+                //float timeSinceEnded = Time.time - (playStartTime + duration);
+                //if (timeSinceEnded >= COOLDOWN_DELAY)
+                //{
+                //    return true;
+                //}
                 return true;
             }
             SetMorphAtT(t);
