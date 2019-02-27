@@ -9,6 +9,9 @@ namespace DeluxePlugin.DollMaker
 {
     public class DollMaker : MVRScript
     {
+        public static string PLUGIN_PATH;
+        public static string LOAD_PATH;
+
         public static string CONFIG_PATH = Application.dataPath + "/../Saves/Scripts/VAMDeluxe/DollMaker/config.json";
         public static JSONClass CONFIG_JSON;
 
@@ -17,29 +20,32 @@ namespace DeluxePlugin.DollMaker
 
         public UI ui;
 
-        List<Module> modules = new List<Module>();
+        public List<BaseModule> modules = new List<BaseModule>();
 
         public Atom person;
+
+        public MainControls mainControls;
 
         public override void Init()
         {
             try
             {
-                CONFIG_JSON = JSON.Parse(SuperController.singleton.ReadFileIntoString(CONFIG_PATH)) as JSONClass;
+                PLUGIN_PATH = GetPluginPath();
+                LOAD_PATH = SuperController.singleton.currentLoadDir;
 
-                CreatePeopleChooser((atom) =>
-                {
-                    if (atom == null)
-                    {
-                        return;
-                    }
-                    person = atom;
-                });
+                CONFIG_PATH = PLUGIN_PATH + "/config.json";
+                CONFIG_JSON = JSON.Parse(SuperController.singleton.ReadFileIntoString(CONFIG_PATH)) as JSONClass;
 
                 ui = new UI(this, 0.001f);
                 ui.canvas.transform.SetParent(containingAtom.mainController.transform, false);
 
-                modules.Add(new Appearance(this));
+                new WorldUI(this);
+
+                mainControls = new MainControls(this);
+
+                //new Appearance(this);
+                new Blend(this);
+
             }
             catch (Exception e)
             {
@@ -78,39 +84,14 @@ namespace DeluxePlugin.DollMaker
             });
         }
 
-        private List<string> GetPeopleNamesFromScene()
+        string GetPluginPath()
         {
-            return SuperController.singleton.GetAtoms()
-                    .Where(atom => atom.GetStorableByID("geometry") != null && atom != containingAtom)
-                    .Select(atom => atom.name).ToList();
-        }
-
-        private JSONStorableStringChooser CreatePeopleChooser(Action<Atom> onChange)
-        {
-            List<string> people = GetPeopleNamesFromScene();
-            JSONStorableStringChooser personChoice = new JSONStorableStringChooser("copyFrom", people, null, "Copy From", (string id) =>
-            {
-                Atom atom = GetAtomById(id);
-                onChange(atom);
-            })
-            {
-                storeType = JSONStorableParam.StoreType.Full
-            };
-
-            if (people.Count > 0)
-            {
-                personChoice.SetVal(people[0]);
-            }
-
-            UIDynamicPopup scenePersonChooser = CreateScrollablePopup(personChoice, false);
-            scenePersonChooser.popupPanelHeight = 250f;
-            RegisterStringChooser(personChoice);
-            scenePersonChooser.popup.onOpenPopupHandlers += () =>
-            {
-                personChoice.choices = GetPeopleNamesFromScene();
-            };
-
-            return personChoice;
+            SuperController.singleton.currentSaveDir = SuperController.singleton.currentLoadDir;
+            string pluginId = this.storeId.Split('_')[0];
+            MVRPluginManager manager = containingAtom.GetStorableByID("PluginManager") as MVRPluginManager;
+            string pathToScriptFile = manager.GetJSON(true, true)["plugins"][pluginId].Value;
+            string pathToScriptFolder = pathToScriptFile.Substring(0, pathToScriptFile.LastIndexOfAny(new char[] { '/', '\\' }));
+            return pathToScriptFolder;
         }
 
     }

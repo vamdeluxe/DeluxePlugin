@@ -1,0 +1,19 @@
+{
+  "personDefaults": {
+    "autoExpression": false,
+    "lookMode": "Player"
+  },
+  "sfxDefaults": {
+    "skinContact": [
+      "Assets/SFX/skin_1.wav",
+      "Assets/SFX/skin_2.wav",
+      "Assets/SFX/skin_3.wav",
+      "Assets/SFX/skin_4.wav",
+      "Assets/SFX/skin_5.wav"
+    ],
+    "insertion": [
+      "Assets/SFX/Slide01.wav",
+      "Assets/SFX/Slide02.wav"
+    ]
+  }
+}

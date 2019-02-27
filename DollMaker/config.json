@@ -9,7 +9,7 @@
     {
       "title": "Chest",
       "bone": "chest",
-      "search": "chest breast",
+      "search": "chest",
       "offset": { "x": 0.5, "y": 0.0, "z": 0.3 }
     },
     {
@@ -39,7 +39,7 @@
     {
       "title": "Feet",
       "bone": "rFoot",
-      "search": "feet foot",
+      "search": "feet",
       "offset": { "x": -0.3, "y": 0.2, "z": -0.3 }
     }
   ]

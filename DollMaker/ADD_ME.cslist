@@ -1,4 +1,10 @@
 ﻿UI.cs
-DMBase.cs
+PathExt.cs
+BaseModule.cs
+WorldUI.cs
+BoneAttachedUI.cs
+MorphSearch.cs
 Appearance.cs
+Blend.cs
+MainControls.cs
 DollMaker.cs
