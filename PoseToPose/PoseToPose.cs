@@ -17,7 +17,6 @@ namespace DeluxePlugin.PoseToPose
 
         JSONStorableBool uiVisible;
         JSONStorableString saveStore;
-        JSONClass saveJSON;
         JSONStorableBool lookAtCamera;
 
         AnimationPattern animationPattern;
@@ -27,6 +26,8 @@ namespace DeluxePlugin.PoseToPose
         UIDynamicSlider setDurationSlider;
         UIDynamicPopup tweenSelection;
         UIDynamicButton undoPoseButton;
+
+        JSONStorableFloat maxKeyframesPerRow;
 
         /// <summary>
         /// The keyframe actively selected by user (clicked on).
@@ -248,7 +249,6 @@ namespace DeluxePlugin.PoseToPose
 
                     editingKeyframe.pose = lastPose;
                     SetToPose(lastPose, true);
-                    UpdateSaveStore();
                 });
 
                 setDurationSlider = keyUI.CreateSlider("Duration To Key", 500, 110);
@@ -288,7 +288,6 @@ namespace DeluxePlugin.PoseToPose
 
                     editingKeyframe.pose = copiedPose;
                     SetToPose(editingKeyframe.pose, true);
-                    UpdateSaveStore();
                 });
 
                 UIDynamicButton copyControllerButton = keyUI.CreateButton("Copy Control", 200, 60);
@@ -422,6 +421,8 @@ namespace DeluxePlugin.PoseToPose
                 thickTimeline.material = animationPattern.rootLineDrawerMaterial;
                 thickTimeline.material.color = new Color(0.15f, 0.66f, 0.0f);
                 thickTimeline.useWorldSpace = false;
+                thickTimeline.numCornerVertices = 6;
+                thickTimeline.alignment = LineAlignment.View;
 
                 updateKeyframeLoop = StartCoroutine(UpdateEditingKeyframeLoop());
 
@@ -450,6 +451,13 @@ namespace DeluxePlugin.PoseToPose
 
                     keyframes.Reverse();
                 });
+
+                maxKeyframesPerRow = new JSONStorableFloat("max keyframes per row", 6, (float value)=>
+                {
+
+                }, 2, 20, true);
+                CreateSlider(maxKeyframesPerRow);
+                RegisterFloat(maxKeyframesPerRow);
             }
             catch (Exception e)
             {
@@ -459,49 +467,6 @@ namespace DeluxePlugin.PoseToPose
 
         void Start()
         {
-            if(saveStore.val == saveStore.defaultVal)
-            {
-                saveJSON = new JSONClass();
-                saveJSON["keyframes"] = new JSONArray();
-                animationPattern.DestroyAllSteps();
-                return;
-            }
-
-            saveJSON = JSON.Parse(saveStore.val).AsObject;
-
-            int index = 0;
-            List<AnimationStep> accountedFor = new List<AnimationStep>();
-
-            JSONArray keyframes = saveJSON["keyframes"].AsArray;
-            for(int i=0; i < keyframes.Count; i++)
-            {
-                JSONClass pose = keyframes[i].AsObject;
-                if (index < animationPattern.steps.Length)
-                {
-                    AnimationStep step = animationPattern.steps[index];
-                    if (step != null)
-                    {
-                        CreateKeyframe(pose, step);
-                        accountedFor.Add(step);
-                    }
-                }
-                else
-                {
-                    CreateKeyframe(pose);
-                }
-
-                index++;
-            }
-
-            List<AnimationStep> existingSteps = animationPattern.steps.ToList();
-            existingSteps.ForEach((step) =>
-            {
-                if (accountedFor.Contains(step) == false)
-                {
-                    step.DestroyStep();
-                }
-            });
-
             if (SuperController.singleton.GetSelectedAtom() != containingAtom)
             {
                 uiVisible.SetVal(false);
@@ -602,24 +567,27 @@ namespace DeluxePlugin.PoseToPose
         #region Implementation
         void LayoutKeys()
         {
-            int index = 0;
-
             if (lookAtCamera.val == true)
             {
                 containingAtom.mainController.transform.LookAt(SuperController.singleton.lookCamera.transform);
             }
 
+            int x = 0;
+            int y = 0;
+
             keyframes.ForEach((key) =>
             {
-                index++;
+                x++;
+
                 FreeControllerV3 stepMC = key.step.containingAtom.mainController;
                 Vector3 position = animationPattern.containingAtom.mainController.transform.position;
-                //Vector3 eulerAngles = animationPattern.containingAtom.mainController.transform.eulerAngles;
-                //stepMC.transform.position = position;
-                //stepMC.transform.eulerAngles = eulerAngles;
-                //stepMC.transform.localEulerAngles = Vector3.zero;
-                //stepMC.transform.localPosition = new Vector3(0, 0, 0);
-                stepMC.transform.position = animationPattern.containingAtom.mainController.transform.TransformPoint(new Vector3(-index * 0.2f, 0, 0));
+                stepMC.transform.position = animationPattern.containingAtom.mainController.transform.TransformPoint(new Vector3(-x * 0.2f, -y * 0.2f, 0));
+
+                if (x >= maxKeyframesPerRow.val)
+                {
+                    x = 0;
+                    y++;
+                }
             });
         }
 
@@ -728,7 +696,6 @@ namespace DeluxePlugin.PoseToPose
                 }
 
                 editingKeyframe.pose = GetPoseFromPerson();
-                UpdateSaveStore();
             }
         }
 
@@ -789,8 +756,6 @@ namespace DeluxePlugin.PoseToPose
 
             Keyframe newKey = CreateKeyframe(pose);
 
-            UpdateSaveStore();
-
             time.SetVal(animationPattern.GetTotalTime());
 
             SuperController.singleton.SelectController(newKey.step.containingAtom.mainController);
@@ -826,8 +791,6 @@ namespace DeluxePlugin.PoseToPose
             next.step.transitionToTime = nextTimeStep - currentTime;
 
             Keyframe newKey = CreateKeyframe(pose, newStep, nextIndex);
-
-            UpdateSaveStore();
 
             time.SetVal(animationPattern.GetTotalTime());
 
@@ -916,22 +879,84 @@ namespace DeluxePlugin.PoseToPose
                 //playback.max = animationPattern.GetTotalTime();
 
                 LayoutKeys();
-
-                UpdateSaveStore();
             }
         }
 
-        void UpdateSaveStore()
+        public override JSONClass GetJSON(bool includePhysical = true, bool includeAppearance = true, bool forceStore = false)
         {
-            JSONArray freshArray = new JSONArray();
-            saveJSON["keyframes"] = freshArray;
+            JSONArray keyframesArray = new JSONArray();
 
             keyframes.ForEach((key) =>
             {
-                freshArray.Add(key.pose);
+                keyframesArray.Add(key.pose);
             });
 
-            saveStore.SetVal(saveJSON.ToString());
+            JSONClass jSON = base.GetJSON(includePhysical, includeAppearance);
+            jSON["keyframes"] = keyframesArray;
+            return jSON;
+        }
+
+        public override void RestoreFromJSON(JSONClass jc, bool restorePhysical = true, bool restoreAppearance = true, JSONArray presetAtoms = null)
+        {
+            base.RestoreFromJSON(jc, restorePhysical, restoreAppearance, presetAtoms);
+
+            if (jc["keyframes"] != null)
+            {
+                PerformLoad(jc);
+            }
+        }
+
+        void PerformLoad(JSONClass jc)
+        {
+            //  legacy
+            if (saveStore.val != saveStore.defaultVal)
+            {
+                jc["keyframes"] = JSON.Parse(saveStore.val).AsObject["keyframes"].AsArray;
+
+                //  remove it from future use
+                saveStore.val = saveStore.defaultVal;
+            }
+            else
+            {
+                if (jc["keyframes"] == null)
+                {
+                    animationPattern.DestroyAllSteps();
+                    return;
+                }
+            }
+
+            int index = 0;
+            List<AnimationStep> accountedFor = new List<AnimationStep>();
+
+            JSONArray keyframes = jc["keyframes"].AsArray;
+            for (int i = 0; i < keyframes.Count; i++)
+            {
+                JSONClass pose = keyframes[i].AsObject;
+                if (index < animationPattern.steps.Length)
+                {
+                    AnimationStep step = animationPattern.steps[index];
+                    if (step != null)
+                    {
+                        CreateKeyframe(pose, step);
+                        accountedFor.Add(step);
+                    }
+                }
+                else
+                {
+                    CreateKeyframe(pose);
+                }
+
+                index++;
+            }
+
+            List<AnimationStep> existingSteps = animationPattern.steps.ToList();
+            existingSteps.ForEach((step) =>
+            {
+                if (accountedFor.Contains(step) == false)
+                {
+                    step.DestroyStep();
+                }
+            });
         }
 
         void CheckStepAdded()
