@@ -18,7 +18,10 @@ namespace DeluxePlugin.Dollmaster
             JSONStorable geometryStorable = atom.GetStorableByID("geometry");
             geometry = geometryStorable as DAZCharacterSelector;
 
-            priorClothes = geometry.activeClothingItems.ToList();
+            priorClothes = geometry.clothingItems.ToList().Select((clothing) =>
+            {
+                return clothing.active;
+            }).ToList();
             dressed = true;
         }
 
@@ -29,24 +32,28 @@ namespace DeluxePlugin.Dollmaster
             if (!dressed)
             {
                 int index = 0;
-                geometry.activeClothingItems.ToList().ForEach((wearing) =>
+                geometry.clothingItems.ToList().ForEach((clothing) =>
                 {
-                    geometry.SetActiveClothingItem(index, false);
+                    geometry.SetActiveClothingItem(clothing, active: false);
                     index++;
                 });
             }
             else
             {
+                List<DAZClothingItem> clothes = geometry.clothingItems.ToList();
                 for (int i = 0; i < priorClothes.Count; i++)
                 {
-                    geometry.SetActiveClothingItem(i, priorClothes[i]);
+                    geometry.SetActiveClothingItem(clothes[i], priorClothes[i]);
                 }
             }
         }
 
         public void OnRestore()
         {
-            priorClothes = geometry.activeClothingItems.ToList();
+            priorClothes = geometry.clothingItems.ToList().Select((clothing) =>
+            {
+                return clothing.active;
+            }).ToList();
             dressed = true;
         }
 

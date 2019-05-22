@@ -141,7 +141,7 @@ namespace DeluxePlugin.Dollmaster
             return jSON;
         }
 
-        public override void RestoreFromJSON(JSONClass jc, bool restorePhysical = true, bool restoreAppearance = true, JSONArray presetAtoms = null)
+        public override void RestoreFromJSON(JSONClass jc, bool restorePhysical = true, bool restoreAppearance = true, JSONArray presetAtoms = null, bool setMissingToDefault = true)
         {
             base.RestoreFromJSON(jc, restorePhysical, restoreAppearance, presetAtoms);
 
