@@ -127,6 +127,11 @@ namespace DeluxePlugin.Dollmaster
 
         public void Trigger()
         {
+            if (expressionsEnabled.val == false)
+            {
+                return;
+            }
+
             if(Time.time >= nextTriggerAvailableTime)
             {
                 StartExpression();

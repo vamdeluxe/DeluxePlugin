@@ -39,6 +39,13 @@ namespace DeluxePlugin.Dollmaster
             {
                 JSONClass atomJSON = montageJSON[i].AsObject;
                 Atom foundAtom = SuperController.singleton.GetAtomByUid(atomJSON["id"]);
+
+                if (foundAtom.GetStorableByID("AnimationPattern") != null){
+                    AnimationPattern ap = foundAtom.GetStorableByID("AnimationPattern") as AnimationPattern;
+                    ap.SyncStepNames();
+                    ap.autoSyncStepNamesJSON.SetVal(false);
+                }
+
                 if (foundAtom == null)
                 {
                     SuperController.LogError("Montage referenced an atom that doesn't exist " + atomJSON["id"]);

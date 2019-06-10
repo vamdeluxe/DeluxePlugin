@@ -105,6 +105,8 @@ namespace DeluxePlugin.Dollmaster
                 {
                     AnimationPattern ap = apAtom.GetStorableByID("AnimationPattern") as AnimationPattern;
 
+                    ap.autoSyncStepNamesJSON.SetVal(false);
+
                     thrustAtomChooser.SetVal(apAtom.name);
 
                     if (ap.steps.Length >= 2)
@@ -148,6 +150,8 @@ namespace DeluxePlugin.Dollmaster
 
                     UISetupState(apAtom);
 
+                    ap.SyncStepNames();
+
                 }, true));
             });
 
@@ -170,6 +174,10 @@ namespace DeluxePlugin.Dollmaster
                         SuperController.LogError("Select an Animation Pattern");
                         return;
                     }
+
+                    AnimationPattern ap = atom.GetStorableByID("AnimationPattern") as AnimationPattern;
+                    ap.SyncStepNames();
+                    ap.autoSyncStepNamesJSON.SetVal(false);
 
                     thrustAtomChooser.SetVal(atom.uid);
                 });

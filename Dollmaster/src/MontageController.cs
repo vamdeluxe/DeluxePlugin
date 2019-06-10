@@ -16,7 +16,6 @@ namespace DeluxePlugin.Dollmaster
             "WindowCamera",
             "CoreControl",
             "PlayerNavigationPanel",
-
         };
 
         public List<Montage> montages = new List<Montage>();
