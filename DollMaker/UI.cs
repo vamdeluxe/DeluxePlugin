@@ -256,7 +256,7 @@ namespace DeluxePlugin.DollMaker
 
             slider.transform.Find("Panel").GetComponent<Image>().color = new Color(0, 0, 0);
 
-            slider.slider.GetComponent<Image>().color = new Color(0, 0, 0);
+            slider.slider.GetComponent<Image>().color = new Color(0.7f, 0.7f, 0.7f);
 
             RectTransform sliderRT = slider.slider.GetComponent<RectTransform>();
             sliderRT.sizeDelta = new Vector2(1, 80);

@@ -6,6 +6,8 @@ using UnityEngine.EventSystems;
 using System.Collections;
 using System.Collections.Generic;
 using SimpleJSON;
+using MeshVR;
+
 namespace DeluxePlugin.DollMaker
 {
     public class Blend : BaseModule
@@ -20,33 +22,86 @@ namespace DeluxePlugin.DollMaker
 
         public Blend(DollMaker dm) : base(dm)
         {
-            dm.mainControls.RegisterTab("Blend", moduleUI);
-            CreateModuleButton("Add Appearances").button.onClick.AddListener(() =>
+            dm.mainControls.RegisterTab("Blend", moduleUI, this);
+
+            Button addMorphPresetButton = CreateModuleButton("Add Preset").button;
+            addMorphPresetButton.onClick.AddListener(() =>
             {
                 SuperController.singleton.editModeToggle.isOn = true;
                 SuperController.singleton.ShowMainHUD();
 
-                SuperController.singleton.GetDirectoryPathDialog((string dir) =>
-                {
-                    if (dir == null || !(dir != string.Empty))
-                    {
-                        return;
-                    }
-
-                    //  have load dialog work both inside and outside folder
-                    try
-                    {
-                        PerformLoadOnPath(dir);
-                    }
-                    catch
-                    {
-                        string folderName = "\\" + dir.Substring(dir.LastIndexOf('\\') + 1) + "\\";
-                        dir = dir.Replace(folderName, "\\");
-                        PerformLoadOnPath(dir);
-                    }
-
-                }, SuperController.singleton.savesDir + "Person" + "\\appearance");
             });
+            JSONStorableUrl url = new JSONStorableUrl("presetPath", "", (string path)=>
+            {
+                if (string.IsNullOrEmpty(path))
+                {
+                    return;
+                }
+
+                string jsonString = SuperController.singleton.ReadFileIntoString(path);
+                JSONClass appearance = JSON.Parse(jsonString).AsObject;
+
+                AddAppearance(appearance, PathExt.GetFileNameWithoutExtension(path));
+
+            });
+            url.RegisterFileBrowseButton(addMorphPresetButton);
+
+            Button addEntirePresetFolder = CreateModuleButton("Add Folder").button;
+            addEntirePresetFolder.onClick.AddListener(() =>
+            {
+                SuperController.singleton.editModeToggle.isOn = true;
+                SuperController.singleton.ShowMainHUD();
+
+                PresetManager pm = atom.GetComponentInChildren<PresetManager>(includeInactive: true);
+                PresetManagerControlUI pmcui = atom.GetComponentInChildren<PresetManagerControlUI>(includeInactive: true);
+                if (pm != null && pmcui != null)
+                {
+                    pm.itemType = PresetManager.ItemType.Custom;
+                    pm.customPath = "Atom/Person/Morphs/";
+                    string path = pm.GetStoreFolderPath();
+                    List<string> files = SuperController.singleton.GetFilesAtPath(path).ToList().Where((fileName) =>
+                    {
+                        return PathExt.GetExtension(fileName) == ".vap";
+                    }).ToList();
+
+                    files.ForEach((file) =>
+                    {
+                        string jsonString = SuperController.singleton.ReadFileIntoString(file);
+                        JSONClass appearance = JSON.Parse(jsonString).AsObject;
+                        AddAppearance(appearance, PathExt.GetFileNameWithoutExtension(file));
+                    });
+                }
+            });
+
+            // Deprecated.
+            //Button addAppearanceButton = CreateModuleButton("Add From Look").button;
+            //addAppearanceButton.onClick.AddListener(() =>
+            //{
+            //    SuperController.singleton.editModeToggle.isOn = true;
+            //    SuperController.singleton.ShowMainHUD();
+
+            //    SuperController.singleton.GetDirectoryPathDialog((string dir) =>
+            //    {
+            //        if (dir == null || !(dir != string.Empty))
+            //        {
+            //            return;
+            //        }
+
+            //        //  have load dialog work both inside and outside folder
+            //        try
+            //        {
+            //            PerformLoadOnPath(dir);
+            //        }
+            //        catch
+            //        {
+            //            string folderName = "\\" + dir.Substring(dir.LastIndexOf('\\') + 1) + "\\";
+            //            dir = dir.Replace(folderName, "\\");
+            //            PerformLoadOnPath(dir);
+            //        }
+
+            //    }, SuperController.singleton.savesDir + "Person" + "\\appearance");
+            //});
+
 
             appearancesLayout = ui.CreateGridLayout(1000, 500, moduleUI.transform);
             appearancesLayout.transform.localPosition = new Vector3(0, -600, 0);
@@ -63,14 +118,7 @@ namespace DeluxePlugin.DollMaker
 
             CreateModuleButton("Clear List").button.onClick.AddListener(() =>
             {
-                sliders.ForEach((slider) =>
-                {
-                    GameObject.Destroy(slider.gameObject);
-                });
-                sliders.Clear();
-                appearances.Clear();
-                computedWeightedMorphs.Clear();
-
+                ClearAppearances();
                 initialAppearance = SuperController.singleton.GetSaveJSON(atom, false, true).AsObject["atoms"].AsArray[0].AsObject;
                 AddAppearance(initialAppearance, "Current", 1);
             });
@@ -97,12 +145,23 @@ namespace DeluxePlugin.DollMaker
             morphControl = character.morphsControlUI;
         }
 
+        void ClearAppearances()
+        {
+            sliders.ForEach((slider) =>
+            {
+                GameObject.Destroy(slider.gameObject);
+            });
+            sliders.Clear();
+            appearances.Clear();
+            computedWeightedMorphs.Clear();
+        }
+
         void PerformLoadOnPath(string dir)
         {
             List<string> files = SuperController.singleton.GetFilesAtPath(dir, "*.json").ToList();
             files.ForEach((file) =>
             {
-                JSONClass person = ReadAppearance(file);
+                JSONClass person = ReadScene(file);
                 if (person == null)
                 {
                     return;
@@ -112,7 +171,7 @@ namespace DeluxePlugin.DollMaker
             });
         }
 
-        JSONClass ReadAppearance(string path)
+        JSONClass ReadScene(string path)
         {
             JSONClass scene = JSON.Parse(SuperController.singleton.ReadFileIntoString(path)).AsObject;
             JSONClass atom = scene["atoms"].AsArray[0].AsObject;
@@ -243,6 +302,13 @@ namespace DeluxePlugin.DollMaker
                     return slider.slider.value;
                 });
             }
+        }
+
+        public override void OnModuleActivate()
+        {
+            base.OnModuleActivate();
+            ClearAppearances();
+            AddAppearance(SuperController.singleton.GetSaveJSON(atom, false, true).AsObject["atoms"].AsArray[0].AsObject, "current", 1);
         }
     }
 }

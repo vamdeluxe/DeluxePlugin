@@ -43,8 +43,8 @@ namespace DeluxePlugin.DollMaker
 
                 mainControls = new MainControls(this);
 
-                //new Appearance(this);
-                new Blend(this);
+                modules.Add(new Appearance(this));
+                modules.Add(new Blend(this));
 
             }
             catch (Exception e)
@@ -56,6 +56,14 @@ namespace DeluxePlugin.DollMaker
         void Start()
         {
 
+        }
+
+        public void RestartModules()
+        {
+            modules.ForEach((module) =>
+            {
+                module.OnModuleActivate();
+            });
         }
 
         void Update()

@@ -6,6 +6,7 @@ using UnityEngine.EventSystems;
 using System.Collections;
 using System.Collections.Generic;
 using SimpleJSON;
+using MeshVR;
 
 namespace DeluxePlugin.DollMaker
 {
@@ -16,7 +17,7 @@ namespace DeluxePlugin.DollMaker
 
         public Appearance(DollMaker dm) : base(dm)
         {
-            dm.mainControls.RegisterTab("Morphs", moduleUI);
+            dm.mainControls.RegisterTab("Morphs", moduleUI, this);
 
             morphSearch = new MorphSearch(this);
 
@@ -41,22 +42,19 @@ namespace DeluxePlugin.DollMaker
                 baUI.Add(boneUI);
             }
 
-            UIDynamicButton loadMorphsButton = CreateModuleButton("Load Morphs");
+            UIDynamicButton loadMorphsButton = CreateModuleButton("Load Morph Preset");
             loadMorphsButton.button.onClick.AddListener(() =>
             {
-                string appearancePath = SuperController.singleton.savesDir + "Person" + "\\appearance";
-                SuperController.singleton.fileBrowserUI.defaultPath = appearancePath;
-                SuperController.singleton.fileBrowserUI.SetTextEntry(b: false);
-                SuperController.singleton.fileBrowserUI.Show((string saveName)=>
+                SuperController.singleton.editModeToggle.isOn = true;
+                SuperController.singleton.ShowMainHUD();
+                PresetManager pm = atom.GetComponentInChildren<PresetManager>(includeInactive: true);
+                PresetManagerControlUI pmcui = atom.GetComponentInChildren<PresetManagerControlUI>(includeInactive: true);
+                if (pm != null && pmcui != null)
                 {
-                    if (!(saveName != string.Empty))
-                    {
-                        return;
-                    }
-                    SuperController.singleton.SetLoadDirFromFilePath(saveName);
-                    JSONClass save = JSON.Parse(SuperController.singleton.ReadFileIntoString(saveName)).AsObject;
-
-                });
+                    pm.itemType = PresetManager.ItemType.Custom;
+                    pm.customPath = "Atom/Person/Morphs/";
+                    pmcui.browsePresetsButton.onClick.Invoke();
+                }
             });
         }
 

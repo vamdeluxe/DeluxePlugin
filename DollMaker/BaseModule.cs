@@ -101,6 +101,11 @@ namespace DeluxePlugin.DollMaker
 
         }
 
+        public virtual void OnModuleActivate()
+        {
+
+        }
+
         public virtual void Update()
         {
 

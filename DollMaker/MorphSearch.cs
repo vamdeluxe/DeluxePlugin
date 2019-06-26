@@ -17,7 +17,7 @@ namespace DeluxePlugin.DollMaker
         GenerateDAZMorphsControlUI morphControl;
         HashSet<string> regions;
 
-        const int MAX_MORPHS_PER_PAGE = 16;
+        const int MAX_MORPHS_PER_PAGE = 25;
         const int MAX_TERMS = 16;
 
         List<UIDynamicSlider> morphSliders = new List<UIDynamicSlider>();
