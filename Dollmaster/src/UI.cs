@@ -17,6 +17,9 @@ namespace DeluxePlugin.Dollmaster
         public bool lookAtCamera = true;
         private float UIScale = 1.0f;
 
+        private UIDynamicButton dmButton;
+        private ScrollRect dmsc;
+
         public UI(MVRScript plugin, float scale = 0.002f)
         {
             this.plugin = plugin;
@@ -28,13 +31,31 @@ namespace DeluxePlugin.Dollmaster
             canvas.pixelPerfect = false;
             SuperController.singleton.AddCanvas(canvas);
 
+            canvas.transform.SetParent(SuperController.singleton.mainHUD, false);
+
             CanvasScaler cs = canvasObject.AddComponent<CanvasScaler>();
-            cs.scaleFactor = 100.0f;
+            cs.scaleFactor = 80.0f;
             cs.dynamicPixelsPerUnit = 1f;
 
             GraphicRaycaster gr = canvasObject.AddComponent<GraphicRaycaster>();
 
             canvas.transform.localScale = new Vector3(scale, scale, scale);
+            //canvas.transform.localPosition = new Vector3(-0.7f, 0, 0);
+            canvas.transform.localPosition = new Vector3(0.26f, -0.14f, 0.0f);
+
+            LookAtCamera();
+
+            //Transform pin = GameObject.Find("Toolbar").transform.parent;
+
+            //dmsc = CreateScrollRect();
+            //dmsc.gameObject.name = "DMSC";
+            //dmsc.transform.SetParent(pin, false);
+            //dmsc.transform.localPosition += new Vector3(1, 0, 0);
+
+            //dmButton = CreateButton("Dollmaster");
+            //dmButton.transform.SetParent(dmsc.transform, false);
+            //dmButton.transform.SetParent(SuperController.singleton.mainHUD, false);
+
         }
 
         public UIDynamicSlider CreateSlider(string name, float width = 300, float height = 80, bool minimal = true)
@@ -77,13 +98,13 @@ namespace DeluxePlugin.Dollmaster
             return uiToggle;
         }
 
-        public UIDynamicPopup CreatePopup(string name, float width = 100, float height = 80)
+        public UIPopup CreatePopup(string name, float width = 100, float height = 80)
         {
             Transform popup = GameObject.Instantiate<Transform>(plugin.manager.configurablePopupPrefab);
             ConfigureTransform(popup, width, height);
             ParentToCanvas(popup);
 
-            UIDynamicPopup uiPopup = popup.GetComponent<UIDynamicPopup>();
+            UIPopup uiPopup = popup.GetComponent<UIPopup>();
             uiPopup.label = name;
             return uiPopup;
         }
@@ -209,22 +230,40 @@ namespace DeluxePlugin.Dollmaster
             t.SetParent(canvas.transform, false);
         }
 
+        public void LookAtCamera()
+        {
+            if (XRSettings.enabled == false)
+            {
+                Transform cameraT = SuperController.singleton.lookCamera.transform;
+                Vector3 endPos = cameraT.position + cameraT.forward * 10000000.0f;
+                canvas.transform.LookAt(endPos, cameraT.up);
+            }
+            else
+            {
+                canvas.transform.localEulerAngles = new Vector3(0, 180, 0);
+            }
+        }
+
         public void Update()
         {
-            {
-                if (XRSettings.enabled == false)
-                {
-                    Transform cameraT = SuperController.singleton.lookCamera.transform;
-                    Vector3 endPos = cameraT.position + cameraT.forward * 10000000.0f;
-                    canvas.transform.LookAt(endPos, cameraT.up);
-                }
-                else
-                {
-                    canvas.transform.localEulerAngles = new Vector3(0, 180, 0);
-                }
+            //Debug.Log(SuperController.singleton.activeUI);
 
-                //canvas.transform.localScale = Vector3.one * plugin.containingAtom.GetStorableByID("scale").GetFloatParamValue("scale") * UIScale;
+            bool menusActive = SuperController.singleton.activeUI == SuperController.ActiveUI.MainMenu ||
+                SuperController.singleton.activeUI == SuperController.ActiveUI.EmbeddedScenePanel ||
+                SuperController.singleton.activeUI == SuperController.ActiveUI.MainMenuOnly ||
+                SuperController.singleton.activeUI == SuperController.ActiveUI.OnlineBrowser ||
+                SuperController.singleton.fileBrowserUI.window.activeSelf;
+
+            bool controllerGUIActive = false;
+            if (SuperController.singleton.GetSelectedController() != null)
+            {
+                controllerGUIActive = SuperController.singleton.GetSelectedController().selected;
             }
+
+
+            //canvas.enabled = SuperController.singleton.mainHUD.gameObject.activeSelf && SuperController.singleton.activeUI == SuperController.ActiveUI.None;
+            canvas.enabled = !(controllerGUIActive || menusActive) && SuperController.singleton.mainHUD.gameObject.activeSelf;
+            LookAtCamera();
         }
 
         public void OnDestroy()
@@ -234,12 +273,22 @@ namespace DeluxePlugin.Dollmaster
                 SuperController.singleton.RemoveCanvas(canvas);
             }
 
-            //canvas.transform.SetParent(null, false);
+            canvas.transform.SetParent(null, false);
 
-            //if (canvas.gameObject != null)
-            //{
-            //    GameObject.Destroy(canvas.gameObject);
-            //}
+            if (canvas.gameObject != null)
+            {
+                GameObject.Destroy(canvas.gameObject);
+            }
+
+            if (dmButton != null)
+            {
+                GameObject.Destroy(dmButton.gameObject);
+            }
+
+            if (dmsc != null)
+            {
+                GameObject.Destroy(dmsc.gameObject);
+            }
         }
 
         public static void ColorButton(UIDynamicButton button, Color textColor, Color buttonColor)

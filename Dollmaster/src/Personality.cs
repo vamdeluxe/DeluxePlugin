@@ -120,6 +120,10 @@ namespace DeluxePlugin.Dollmaster
 
         public NamedAudioClip GetRandomClimaxClip()
         {
+            if (personaConfig == null)
+            {
+                return null;
+            }
             JSONArray climaxes = personaConfig["climaxes"].AsArray;
             if (climaxes.Count == 0)
             {
@@ -128,6 +132,53 @@ namespace DeluxePlugin.Dollmaster
             int randomIndex = UnityEngine.Random.Range(0, climaxes.Count);
             JSONClass picked = climaxes[randomIndex].AsObject;
             string clipName = PathExt.GetFileName(picked["audio"].Value);
+            return audioClips.Find((nac) =>
+            {
+                return nac.displayName == clipName;
+            });
+        }
+
+        public NamedAudioClip GetRandomPantingClip()
+        {
+            return GetRandomClipFromCategory("panting");
+        }
+
+        public NamedAudioClip GetRandomBreatheClip()
+        {
+            return GetRandomClipFromCategory("breathe");
+        }
+
+        NamedAudioClip GetRandomClipFromCategory(string category)
+        {
+            if (personaConfig == null)
+            {
+                return null;
+            }
+
+            if (personaConfig[category] == null)
+            {
+                return null;
+            }
+
+            JSONArray clipGroup = personaConfig[category].AsArray;
+            if (clipGroup == null)
+            {
+                return null;
+            }
+
+            if (clipGroup.Count == 0)
+            {
+                return null;
+            }
+
+            Debug.Log(clipGroup.Count);
+
+            int randomIndex = UnityEngine.Random.Range(0, clipGroup.Count);
+            string picked = clipGroup[randomIndex].Value;
+
+            string clipName = PathExt.GetFileName(picked);
+            Debug.Log(clipName);
+
             return audioClips.Find((nac) =>
             {
                 return nac.displayName == clipName;

@@ -9,7 +9,9 @@ namespace DeluxePlugin.Dollmaster
 {
     public class ExpressionController : BaseModule
     {
-        JSONStorableBool expressionsEnabled;
+        JSONStorableBool morphsEnabled;
+        JSONStorableBool voiceEnabled;
+        JSONStorableFloat morphPercent;
 
         GenerateDAZMorphsControlUI morphControl;
 
@@ -37,11 +39,27 @@ namespace DeluxePlugin.Dollmaster
 
         public ExpressionController(DollmasterPlugin dm) : base(dm)
         {
-            expressionsEnabled = new JSONStorableBool("expressionsEnabled", true);
-            dm.RegisterBool(expressionsEnabled);
-            UIDynamicToggle moduleEnableToggle = dm.CreateToggle(expressionsEnabled);
-            moduleEnableToggle.label = "Enable Expressions + Voice";
-            moduleEnableToggle.backgroundColor = Color.green;
+            morphsEnabled = new JSONStorableBool("morphsEnabled", true, (bool enabled)=>
+            {
+                if (enabled == false)
+                {
+                    ZeroTargets();
+                }
+            });
+            dm.RegisterBool(morphsEnabled);
+            UIDynamicToggle morphsEnabledToggle = dm.CreateToggle(morphsEnabled);
+            morphsEnabledToggle.label = "Enable Facial Morphs";
+            morphsEnabledToggle.backgroundColor = Color.green;
+
+            voiceEnabled = new JSONStorableBool("voiceEnabled", true);
+            dm.RegisterBool(voiceEnabled);
+            UIDynamicToggle voiceEnabledToggle = dm.CreateToggle(voiceEnabled);
+            voiceEnabledToggle.label = "Enable Voice";
+            voiceEnabledToggle.backgroundColor = Color.green;
+
+            morphPercent = new JSONStorableFloat("morph percent", 0.7f, 0, 1, true);
+            dm.RegisterFloat(morphPercent);
+            UIDynamicSlider morphPercentSlider = dm.CreateSlider(morphPercent);
 
             JSONStorable geometry = atom.GetStorableByID("geometry");
             DAZCharacterSelector character = geometry as DAZCharacterSelector;
@@ -57,25 +75,26 @@ namespace DeluxePlugin.Dollmaster
             upperJaw = atom.GetStorableByID("upperJaw") as DAZBone;
             lowerJaw = atom.GetStorableByID("lowerJaw") as DAZBone;
 
-            //  Hack to fix bad tongue morph values
-            morphControl.GetMorphByDisplayName("Tongue In-Out").startValue = 1.0f;
+            //  Hack to fix bad tongue morph values.
+            //morphControl.GetMorphByDisplayName("Tongue In-Out").startValue = 1.0f;
 
             dm.CreateSpacer();
+
+            // Prevent mouth from getting too big.
+            dm.headAudioSource.SetFloatParamValue("volumeTriggerMultiplier", 0);
         }
 
         public override void Update()
         {
             base.Update();
 
-            if (expressionsEnabled.val == false)
-            {
-                return;
-            }
-
             bool shouldBlink = currentIdle == null && currentEyes == null;
             atom.GetStorableByID("EyelidControl").SetBoolParamValue("blinkEnabled", shouldBlink);
 
-            ZeroTargets();
+            if (dm.expressionController.morphsEnabled.val)
+            {
+                ZeroTargets();
+            }
 
             if (dm.arousal.value == 0)
             {
@@ -102,7 +121,11 @@ namespace DeluxePlugin.Dollmaster
                 SetExpression(currentIdle);
 
                 float mouthOpenTarget = Mathf.Clamp(dm.headAudioSource.smoothedClipLoudness * 1.0f, 0, 1.0f);
-                mouthOpenMorph.SetValue(mouthOpenTarget);
+
+                if (dm.expressionController.morphsEnabled.val)
+                {
+                    mouthOpenMorph.SetValue(mouthOpenTarget);
+                }
                 dm.headAudioSource.volumeTriggerQuickness = 20.0f;
             }
             else
@@ -116,22 +139,29 @@ namespace DeluxePlugin.Dollmaster
             if (dm.breathController.isBreathingWithMouth)
             {
                 float mouthOpenTarget = Mathf.Clamp(0.4f + dm.headAudioSource.smoothedClipLoudness * 3.0f, 0, 1.0f);
-                mouthOpenMorph.SetValue(mouthOpenTarget);
+                if (dm.expressionController.morphsEnabled.val)
+                {
+                    mouthOpenMorph.SetValue(mouthOpenTarget);
+                }
             }
 
             //Debug.Log(lowerJaw.transform.localEulerAngles.x + " " + upperJaw.transform.localEulerAngles.x);
 
 
-            TweenMorphTargets();
+
+            if (morphsEnabled.val == false)
+            {
+                ClearExpressions();
+            }
+
+            if (dm.expressionController.morphsEnabled.val)
+            {
+                TweenMorphTargets();
+            }
         }
 
         public void Trigger()
         {
-            if (expressionsEnabled.val == false)
-            {
-                return;
-            }
-
             if(Time.time >= nextTriggerAvailableTime)
             {
                 StartExpression();
@@ -165,8 +195,11 @@ namespace DeluxePlugin.Dollmaster
 
             currentIdle = null;
 
-            dm.PlayAudio(clip);
-            lastPlayedClip = clip;
+            if (voiceEnabled.val)
+            {
+                dm.PlayAudio(clip);
+                lastPlayedClip = clip;
+            }
 
             nextTriggerAvailableTime = Time.time + clip.sourceClip.length + UnityEngine.Random.Range(0.5f, 3.0f);
 
@@ -227,6 +260,35 @@ namespace DeluxePlugin.Dollmaster
             });
         }
 
+        public static void ZeroPoseMorphs(Atom atom)
+        {
+            JSONStorable geometry = atom.GetStorableByID("geometry");
+            if (geometry == null)
+            {
+                return;
+            }
+
+            DAZCharacterSelector character = geometry as DAZCharacterSelector;
+            var morphControl = character.morphsControlUI;
+
+            morphControl.GetMorphDisplayNames().ToList().ForEach(name =>
+            {
+                DAZMorph morph = morphControl.GetMorphByDisplayName(name);
+                if (morph == null)
+                {
+                    return;
+                }
+                if (morph.region == null)
+                {
+                    return;
+                }
+                if (morph.isPoseControl || morph.region.Contains("Expression"))
+                {
+                    morph.SetValue(morph.startValue);
+                }
+            });
+        }
+
         void SetExpression(JSONNode node, float alpha = 1.0f)
         {
             if (node == null)
@@ -250,7 +312,7 @@ namespace DeluxePlugin.Dollmaster
 
                 if (morph.isPoseControl || morph.region.Contains("Expressions"))
                 {
-                    morphTargets[morph] = value;
+                    morphTargets[morph] = value * morphPercent.val;
                     animatedMorphs = morphTargets.Keys.ToList();
                 }
             }
@@ -263,22 +325,10 @@ namespace DeluxePlugin.Dollmaster
             {
                 return;
             }
-            //float n = Mathf.PerlinNoise(Time.time, 0);
 
-            //int morphsModified = 0;
             animatedMorphs.ForEach((morph) =>
             {
                 float target = morphTargets[morph];
-
-                //if(target != 0)
-                //{
-                    //float multiplier = 0.1f;
-                    //if(currentIdle != null)
-                    //{
-                    //    multiplier = 0.2f;
-                    //}
-                    //target += Mathf.Clamp(n * multiplier,-1,1);
-                //}
 
                 target = Mathf.Clamp(target, -target, target);
 
@@ -294,16 +344,10 @@ namespace DeluxePlugin.Dollmaster
                 if ( Mathf.Abs(next - current)<0.01f )
                 {
                     morph.SetValue(target);
-                    //morphsModified++;
                     return;
                 }
                 morph.SetValue(next);
-                //morphsModified++;
-                //morph.SyncJSON();
             });
-
-            //Debug.Log(animatedMorphs.Count);
-            //Debug.Log(morphsModified);
         }
 
         public void TriggerClimax()

@@ -5,6 +5,7 @@ src/BaseModule.cs
 src/WorldUI.cs
 src/Arousal.cs
 src/ThrustController.cs
+src/ThrustAutoController.cs
 src/PluginState.cs
 src/Personality.cs
 src/Personas.cs

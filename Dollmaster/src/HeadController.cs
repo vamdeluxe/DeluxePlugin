@@ -14,11 +14,14 @@ namespace DeluxePlugin.Dollmaster
         JSONStorableBool headControlEnabled;
         JSONStorableFloat durationBetweenLookChange;
         JSONStorableFloat headTurnSpeed;
+        JSONStorableBool saccadeEnabled;
 
         FreeControllerV3 headControl;
 
         FreeControllerV3 chestControl;
+        DAZBone chestBone;
         DAZBone neckBone;
+        DAZBone hipBone;
 
         float lastTriggered = 0;
 
@@ -26,7 +29,12 @@ namespace DeluxePlugin.Dollmaster
 
         Vector3 lookOffset = Vector3.zero;
 
-        JSONStorable eyesStorable;
+        EyesControl eyesControl;
+
+        GameObject dummy;
+
+        float nextSaccadeTime = Time.time;
+        Vector3 saccadeOffset = new Vector3();
 
         public HeadController(DollmasterPlugin dm) : base(dm)
         {
@@ -46,7 +54,9 @@ namespace DeluxePlugin.Dollmaster
 
             headControl = atom.GetStorableByID("headControl") as FreeControllerV3;
             chestControl = atom.GetStorableByID("chestControl") as FreeControllerV3;
+            chestBone = atom.GetStorableByID("chest") as DAZBone;
             neckBone = atom.GetStorableByID("neck") as DAZBone;
+            hipBone = atom.GetStorableByID("hip") as DAZBone;
 
             alwaysLookAtMe = new JSONStorableBool("alwaysLookAtMe", false);
             dm.RegisterBool(alwaysLookAtMe);
@@ -57,14 +67,49 @@ namespace DeluxePlugin.Dollmaster
             forceLookToggle.backgroundColor = new Color(0.2f, 0.2f, 0.2f);
             forceLookToggle.labelText.color = new Color(1, 1, 1);
 
-            eyesStorable = atom.GetStorableByID("Eyes");
+            eyesControl = atom.GetStorableByID("Eyes") as EyesControl;
 
             dm.CreateSpacer(true);
+
+            saccadeEnabled = new JSONStorableBool("saccadeEnabled", true);
+            dm.RegisterBool(saccadeEnabled);
+            dm.CreateToggle(saccadeEnabled);
+
+            dummy = new GameObject();
         }
 
         public override void Update()
         {
             base.Update();
+
+            Vector3 targetOrigin = CameraTarget.centerTarget.transform.position + lookOffset;
+            float behindAmount = 100f;
+            Vector3 delta = targetOrigin - headControl.transform.position;
+            Vector3 target = CameraTarget.centerTarget.transform.position + delta.normalized * behindAmount;
+            target += Vector3.down * 0.2f;
+
+            if (alwaysLookAtMe.val)
+            {
+                eyesControl.currentLookMode = EyesControl.LookMode.Target;
+                eyesControl.lookAt = dummy.transform;
+            }
+
+            dummy.transform.position = CameraTarget.centerTarget.transform.position + saccadeOffset;
+
+            if (saccadeEnabled.val)
+            {
+                if (Time.time >= nextSaccadeTime)
+                {
+                    saccadeOffset = UnityEngine.Random.insideUnitSphere * 0.1f;
+                    nextSaccadeTime = Time.time + UnityEngine.Random.Range(0.5f, 1.5f);
+                }
+            }
+            else
+            {
+                saccadeOffset = Vector3.zero;
+            }
+
+
 
             if (headControlEnabled.val == false && alwaysLookAtMe.val == false)
             {
@@ -80,21 +125,26 @@ namespace DeluxePlugin.Dollmaster
 
             if ((headLookingAtPlayer && dm.arousal.value > 0) || alwaysLookAtMe.val)
             {
-                float behindAmount = 100f;
-                Vector3 up = neckBone.transform.position - chestControl.transform.position;
 
-                Vector3 targetOrigin = CameraTarget.centerTarget.transform.position + lookOffset;
-                Vector3 delta = targetOrigin - headControl.transform.position;
-                Vector3 target = CameraTarget.centerTarget.transform.position + delta.normalized * behindAmount;
 
-                Quaternion lookRotation = Quaternion.LookRotation(delta, up);
-                headControl.transform.rotation = Quaternion.Lerp(headControl.transform.rotation, lookRotation, Time.deltaTime * headTurnSpeed.val);
+                Vector3 hipToNeck = Vector3.Normalize(neckBone.transform.position - hipBone.transform.position);
+                Vector3 cameraUp = CameraTarget.centerTarget.transform.up;
+                Vector3 hybridUp = Vector3.Lerp(cameraUp, hipToNeck, 0.5f);
+                float dotProduct = Vector3.Dot(CameraTarget.centerTarget.transform.up, hipToNeck);
+
+                //if (dotProduct >= -0.3f)
+                {
+                    Quaternion lookRotation = Quaternion.LookRotation(delta, hybridUp);
+                    headControl.transform.rotation = Quaternion.RotateTowards(headControl.transform.rotation, lookRotation, headTurnSpeed.val * Time.deltaTime * 20);
+                }
+                //Vector3 headEuler = headControl.transform.localEulerAngles;
+                //float headYaw = headEuler.z;
+                //Debug.Log(headYaw);
+                //headYaw = Mathf.Clamp(headYaw, 180 - 20, 180 + 20);
+                //headEuler.z = headYaw;
+                //headControl.transform.localEulerAngles = headEuler;
             }
 
-            if (alwaysLookAtMe.val)
-            {
-                eyesStorable.SetStringChooserParamValue("lookMode", "Player");
-            }
         }
 
         public void Trigger()
@@ -118,9 +168,17 @@ namespace DeluxePlugin.Dollmaster
             lookOffset = Vector3.zero;
             if (UnityEngine.Random.Range(0f, 100f) > 50f)
             {
-                lookOffset.y = UnityEngine.Random.Range(-0.4f, 0.05f);
+                lookOffset = Vector3.up * UnityEngine.Random.Range(-0.6f, 0.05f);
             }
 
+        }
+
+        public override void OnDestroy()
+        {
+            if (dummy != null)
+            {
+                GameObject.Destroy(dummy);
+            }
         }
     }
 }

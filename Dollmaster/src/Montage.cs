@@ -9,76 +9,101 @@ namespace DeluxePlugin.Dollmaster
 {
     public class Montage
     {
+        Atom atom;
         public string name;
-        public JSONArray montageJSON;
-        public List<JSONClass> poses = new List<JSONClass>();
+        public JSONClass montageJSON;
+        public List<Pose> poses = new List<Pose>();
+        int currentPoseIndex = 0;
 
-        public Montage(string name, JSONArray montageJSON)
+        public Montage(Atom atom, string filePath)
         {
-            this.name = name;
-            this.montageJSON = montageJSON;
-        }
+            this.atom = atom;
+            montageJSON = JSON.Parse(SuperController.singleton.ReadFileIntoString(filePath)) as JSONClass;
+            poses.Add(ExtractPersonPose(montageJSON));
 
-        public JSONClass GetJSON()
-        {
-            JSONClass node = new JSONClass();
-            node["name"] = name;
-            node["positions"] = montageJSON;
-            JSONArray poseArray = new JSONArray();
-            poses.ForEach((poseJSON) =>
+            string fileName = PathExt.GetFileName(filePath);
+            string folder = filePath.Replace(fileName, "");
+            string montageName = PathExt.GetFileNameWithoutExtension(filePath);
+
+            name = montageName;
+
+            List<string> poseFiles = SuperController.singleton.GetFilesAtPath(folder, "*.json").ToList().Where(path =>
             {
-                poseArray.Add(poseJSON);
-            });
-            node["poses"] = poseArray;
-            return node;
-        }
-
-        public void Apply()
-        {
-            for(int i=0; i<montageJSON.Count; i++)
-            {
-                JSONClass atomJSON = montageJSON[i].AsObject;
-                Atom foundAtom = SuperController.singleton.GetAtomByUid(atomJSON["id"]);
-
-                if (foundAtom.GetStorableByID("AnimationPattern") != null){
-                    AnimationPattern ap = foundAtom.GetStorableByID("AnimationPattern") as AnimationPattern;
-                    ap.SyncStepNames();
-                    ap.autoSyncStepNamesJSON.SetVal(false);
-                }
-
-                if (foundAtom == null)
+                if (path.Contains(montageName) == false)
                 {
-                    SuperController.LogError("Montage referenced an atom that doesn't exist " + atomJSON["id"]);
-                    return;
+                    return false;
                 }
-
-                if(atomJSON["id"].Value.Contains("Doll Control"))
+                int periodCount = path.Count(f => f == '.');
+                if (periodCount <= 1)
                 {
-                    continue;
+                    return false;
                 }
-
-                foundAtom.PreRestore();
-                foundAtom.RestoreTransform(atomJSON);
-                foundAtom.Restore(atomJSON, restorePhysical: true, restoreAppearance: false, restoreCore: false, presetAtoms: montageJSON);
-                foundAtom.LateRestore(atomJSON, restorePhysical: true, restoreAppearance: false, restoreCore: false);
-                foundAtom.PostRestore();
-                SuperController.singleton.PauseSimulation(5, "Loading Montage");
-            }
-        }
-
-        public void AddPose(JSONClass poseJSON)
-        {
-            poses.Add(poseJSON);
-        }
-
-        public List<string> GetPoseNames()
-        {
-            int index = 0;
-            return poses.Select((pose) =>
-            {
-                index++;
-                return "Pose " + index;
+                return true;
             }).ToList();
+
+            poseFiles.ForEach(poseFilePath =>
+            {
+                //Debug.Log("pose file found" + poseFilePath);
+                var poseMontageJSON = JSON.Parse(SuperController.singleton.ReadFileIntoString(poseFilePath)) as JSONClass;
+
+                poses.Add(ExtractPersonPose(poseMontageJSON));
+            });
+
+            //Debug.Log("montage " + filePath + " has " + poses.Count() + " poses");
+        }
+
+        public Pose ExtractPersonPose(JSONClass json)
+        {
+            JSONArray atoms = json["atoms"].AsArray;
+
+            JSONClass person1JSON = null;
+            JSONClass person2JSON = null;
+            for (int i = 0; i < atoms.Count; i++)
+            {
+                JSONClass atomObj = atoms[i].AsObject;
+                string id = atomObj["id"].Value;
+                if (id == "Person")
+                {
+                    person1JSON = atomObj;
+                }
+                if (id == "Person#2")
+                {
+                    person2JSON = atomObj;
+                }
+            }
+            if (person1JSON == null)
+            {
+                SuperController.LogError("Expected at least one person named Person in montage");
+                return null;
+            }
+
+            return new Pose(atom, person1JSON);
+        }
+
+        public void Activate(DollmasterPlugin dm)
+        {
+            MontageController.BeginMontage(dm, montageJSON);
+        }
+
+        public Pose SelectRandomPose()
+        {
+            if (poses.Count <= 0)
+            {
+                return null;
+            }
+            if (poses.Count == 1)
+            {
+                return poses[0];
+            }
+
+            int index = UnityEngine.Random.Range(0, poses.Count);
+            while (currentPoseIndex == index)
+            {
+                index = UnityEngine.Random.Range(0, poses.Count);
+            }
+
+            currentPoseIndex = index;
+            return poses[index];
         }
     }
 }

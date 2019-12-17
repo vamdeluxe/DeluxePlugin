@@ -46,7 +46,7 @@ namespace DeluxePlugin.DollMaker
             loadMorphsButton.button.onClick.AddListener(() =>
             {
                 SuperController.singleton.editModeToggle.isOn = true;
-                SuperController.singleton.ShowMainHUD();
+                SuperController.singleton.ShowMainHUDAuto();
                 PresetManager pm = atom.GetComponentInChildren<PresetManager>(includeInactive: true);
                 PresetManagerControlUI pmcui = atom.GetComponentInChildren<PresetManagerControlUI>(includeInactive: true);
                 if (pm != null && pmcui != null)

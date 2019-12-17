@@ -39,6 +39,8 @@ namespace DeluxePlugin.Dollmaster
                 Rigidbody rb = SuperController.singleton.RigidbodyNameToRigidbody(atom.name + ":hipControl");
                 audioAtom.mainController.SelectLinkToRigidbody(rb, FreeControllerV3.SelectLinkState.PositionAndRotation);
 
+                audioAtom.hidden = true;
+
             }));
 
             JSONClass sfxDefaults = dm.config.configJSON["sfxDefaults"].AsObject;
@@ -152,6 +154,11 @@ namespace DeluxePlugin.Dollmaster
             {
                 URLAudioClipManager.singleton.RemoveClip(clip);
             });
+
+            if (audioAtom != null)
+            {
+                SuperController.singleton.RemoveAtom(audioAtom);
+            }
         }
     }
 }

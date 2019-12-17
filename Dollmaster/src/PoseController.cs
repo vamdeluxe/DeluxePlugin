@@ -7,18 +7,86 @@ using System.Linq;
 
 namespace DeluxePlugin.Dollmaster
 {
+    public class PoseTransform
+    {
+        public Vector3 localPosition;
+        public Quaternion localRotation;
+    }
+
+    public class Pose
+    {
+        public Dictionary<string, PoseTransform> transforms = new Dictionary<string, PoseTransform>();
+        public Pose(Atom atom, JSONNode atomJSON)
+        {
+            var obj = atomJSON.AsObject;
+            var storables = obj["storables"].AsArray;
+            Dictionary<string, JSONClass> storablesDict = new Dictionary<string, JSONClass>();
+            storables.Childs.ToList().ForEach(node =>
+            {
+                var asClass = node.AsObject;
+                storablesDict[asClass["id"]] = node.AsObject;
+            });
+
+            atom.freeControllers.ToList().ForEach(controller =>
+            {
+                string id = controller.storeId;
+                if (id == "control")
+                {
+                    return;
+                }
+
+                if (storablesDict.ContainsKey(id) == false)
+                {
+                    return;
+                }
+                var storable = storablesDict[id];
+                Vector3 position = GetLocalPosition(storable);
+                Quaternion rotation = GetLocalRotation(storable);
+                PoseTransform pt = new PoseTransform() { localPosition = position, localRotation = rotation };
+                transforms[id] = pt;
+            });
+        }
+
+        public Pose(Atom atom)
+        {
+            atom.freeControllers.ToList().ForEach(controller =>
+            {
+                transforms[controller.storeId] = new PoseTransform() { localPosition = controller.transform.localPosition, localRotation = controller.transform.localRotation };
+            });
+        }
+
+        private Vector3 GetLocalPosition(JSONNode jn)
+        {
+            Vector3 v = new Vector3();
+            v.x = jn["localPosition"]["x"].AsFloat;
+            v.y = jn["localPosition"]["y"].AsFloat;
+            v.z = jn["localPosition"]["z"].AsFloat;
+            return v;
+        }
+
+        private Quaternion GetLocalRotation(JSONNode jn)
+        {
+            Vector3 v = new Vector3();
+            v.x = jn["localRotation"]["x"].AsFloat;
+            v.y = jn["localRotation"]["y"].AsFloat;
+            v.z = jn["localRotation"]["z"].AsFloat;
+            Quaternion q = new Quaternion();
+            q.eulerAngles = v;
+            return q;
+        }
+    }
+
     public class PoseController : BaseModule
     {
         public JSONStorableBool poseEnabled;
         public JSONStorableBool holdPose;
-        public JSONStorableStringChooser poseChoice;
         public JSONStorableFloat poseAnimationDuration;
         public JSONStorableFloat durationBetweenPoseChange;
 
         Montage currentMontage;
 
-        JSONClass startingPose;
-        JSONClass targetPose;
+        Pose startingPose;
+        Pose targetPose;
         float animationStartTime = 0;
 
         float lastTriggeredTime = 0;
@@ -26,6 +94,7 @@ namespace DeluxePlugin.Dollmaster
         const float CLIMAX_ANIMATION_DURATION = 0.8f;
 
         public UIDynamicButton nextPoseButton;
+        List<FreeControllerV3> controllers;
 
         public PoseController(DollmasterPlugin dm) : base(dm)
         {
@@ -35,61 +104,9 @@ namespace DeluxePlugin.Dollmaster
             moduleEnableToggle.label = "Enable Pose Change";
             moduleEnableToggle.backgroundColor = Color.green;
 
-            poseChoice = new JSONStorableStringChooser("poseChoice", new List<string>(), "Default", "Pose", (string poseName)=>
-            {
-                try
-                {
-                    if(currentMontage == null)
-                    {
-                        return;
-                    }
-
-                    JSONClass pose = GetPoseFromName(poseName);
-                    if (pose == null)
-                    {
-                        SuperController.LogError("no pose with id " + poseName);
-                        return;
-                    }
-
-                    AnimateToPose(pose);
-
-                }
-                catch(Exception e)
-                {
-                    Debug.Log(e);
-                }
-
-            });
-
-            dm.RegisterStringChooser(poseChoice);
-
-
-
             poseAnimationDuration = new JSONStorableFloat("poseAnimationDuration", 1.2f, 0.01f, 10.0f);
             dm.RegisterFloat(poseAnimationDuration);
             dm.CreateSlider(poseAnimationDuration);
-
-            nextPoseButton = dm.ui.CreateButton("Next Pose", 300, 80);
-            nextPoseButton.transform.Translate(0.415f, -0.1f, 0, Space.Self);
-            nextPoseButton.buttonColor = new Color(0.4f, 0.3f, 0.05f);
-            nextPoseButton.textColor = new Color(1, 1, 1);
-            nextPoseButton.button.onClick.AddListener(() =>
-            {
-                if (currentMontage == null || poseChoice.choices.Count <=1 )
-                {
-                    return;
-                }
-
-                int index = poseChoice.choices.IndexOf(poseChoice.val);
-                int nextIndex = index + 1;
-                if (nextIndex >= poseChoice.choices.Count)
-                {
-                    nextIndex = 0;
-                }
-
-                poseChoice.SetVal(poseChoice.choices[nextIndex]);
-            });
-            nextPoseButton.gameObject.SetActive(false);
 
             durationBetweenPoseChange = new JSONStorableFloat("durationBetweenPoseChange", 8.0f, 1.0f, 20.0f, false);
             dm.RegisterFloat(durationBetweenPoseChange);
@@ -105,18 +122,8 @@ namespace DeluxePlugin.Dollmaster
             holdPoseToggle.labelText.color = new Color(1, 1, 1);
 
             dm.CreateSpacer();
-        }
 
-        public void SetMontage(Montage montage)
-        {
-            currentMontage = montage;
-            if (montage == null)
-            {
-                poseChoice.SetVal(poseChoice.defaultVal);
-                return;
-            }
-            poseChoice.choices = montage.GetPoseNames();
-            poseChoice.SetVal(poseChoice.defaultVal);
+            controllers = atom.freeControllers.ToList();
         }
 
         public override void Update()
@@ -128,7 +135,7 @@ namespace DeluxePlugin.Dollmaster
                 return;
             }
 
-            bool anyHeldByPlayer = atom.freeControllers.ToList().Any((controller) =>
+            bool anyHeldByPlayer = controllers.Any((controller) =>
             {
                return controller.linkToRB != null && (controller.linkToRB.name == "MouseGrab" || controller.linkToRB.name == "LeftHand" || controller.linkToRB.name == "RightHand");
             });
@@ -153,26 +160,14 @@ namespace DeluxePlugin.Dollmaster
                 TweenTransform(startingPose, targetPose, alpha, true);
                 if (alpha >= 1)
                 {
-                    startingPose = null;
-                    targetPose = null;
+                    StopCurrentAnimation();
                 }
             }
         }
 
-        public JSONClass GetPoseFromName(string poseName)
+        public void AnimateToPose(Pose pose)
         {
-            JSONClass pose = currentMontage.poses[GetPoseIDFromName(poseName)];
-            return pose;
-        }
-
-        int GetPoseIDFromName(string poseName)
-        {
-            return int.Parse(poseName.Split(' ')[1]) - 1;
-        }
-
-        public void AnimateToPose(JSONClass pose)
-        {
-            startingPose = GetLocalPose(atom);
+            startingPose = new Pose(atom);
             targetPose = pose;
             animationStartTime = Time.time;
         }
@@ -203,24 +198,7 @@ namespace DeluxePlugin.Dollmaster
                 return;
             }
 
-            SelectRandomPose();
-        }
-
-        public void SelectRandomPose()
-        {
-            if (currentMontage == null)
-            {
-                return;
-            }
-
-            if (currentMontage.poses.Count == 0)
-            {
-                return;
-            }
-
-            int randomIndex = UnityEngine.Random.Range(0, currentMontage.poses.Count);
-            JSONClass pose = currentMontage.poses[randomIndex];
-            AnimateToPose(pose);
+            dm.montageController.RandomPose();
         }
 
         static public float CubicEaseInOut(float p)
@@ -236,7 +214,7 @@ namespace DeluxePlugin.Dollmaster
             }
         }
 
-        public void TweenTransform(JSONNode from, JSONNode to, float alpha, bool easing = false)
+        public void TweenTransform(Pose from, Pose to, float alpha, bool easing = false)
         {
             alpha = Mathf.Clamp01(alpha);
 
@@ -247,121 +225,28 @@ namespace DeluxePlugin.Dollmaster
 
             Transform personRoot = atom.mainController.transform;
 
-            JSONArray fromControllers = from["nodes"].AsArray;
-            JSONArray toControllers = to["nodes"].AsArray;
-
-            for (int i = 0; i < fromControllers.Count; i++)
+            from.transforms.Keys.ToList().ForEach(id =>
             {
-                JSONClass fromStorable = fromControllers[i].AsObject;
-                JSONClass toStorable = toControllers[i].AsObject;
-
-                string id = fromStorable.AsObject["id"];
-
-                if (id == "control")
+                if (from.transforms.ContainsKey(id) == false)
                 {
-                    continue;
+                    return;
                 }
-
-                bool isBone = fromStorable["bone"].AsBool;
-
-                JSONStorable storable = atom.GetStorableByID(id);
-
-                if (storable == null)
-                {
-                    continue;
-                }
-
-                Vector3 fromPosition = GetPosition(fromStorable);
-                Quaternion fromRotation = GetRotation(fromStorable);
-
-                Vector3 toPosition = GetPosition(toStorable);
-                Quaternion toRotation = GetRotation(toStorable);
-
-                if (isBone)
-                {
-                    DAZBone bone = storable as DAZBone;
-                    if (bone.isRoot)
-                    {
-                        continue;
-                    }
-                    continue;
-                }
-
-                storable.transform.localPosition = Vector3.Lerp(fromPosition, toPosition, alpha);
-                storable.transform.localRotation = Quaternion.Lerp(fromRotation, toRotation, alpha);
-            }
-        }
-
-        private Vector3 GetPosition(JSONNode jn)
-        {
-            Vector3 v = new Vector3();
-            v.x = jn["position"]["x"].AsFloat;
-            v.y = jn["position"]["y"].AsFloat;
-            v.z = jn["position"]["z"].AsFloat;
-            return v;
-        }
-
-        private Quaternion GetRotation(JSONNode jn)
-        {
-            Vector3 v = new Vector3();
-            v.x = jn["rotation"]["x"].AsFloat;
-            v.y = jn["rotation"]["y"].AsFloat;
-            v.z = jn["rotation"]["z"].AsFloat;
-            Quaternion q = new Quaternion();
-            q.eulerAngles = v;
-            return q;
-        }
-
-        public static JSONClass GetLocalPose(Atom person)
-        {
-            JSONClass obj = new JSONClass();
-            JSONArray saveArray = new JSONArray();
-            obj["nodes"] = saveArray;
-
-            person.GetStorableIDs().ToList().ForEach((storeId) =>
-            {
-                DAZBone bone = person.GetStorableByID(storeId) as DAZBone;
-                if (bone == null)
+                if (to.transforms.ContainsKey(id) == false)
                 {
                     return;
                 }
 
-                JSONClass controllerNode = new JSONClass();
-                controllerNode["id"] = bone.storeId;
-                controllerNode["bone"].AsBool = true;
+                PoseTransform fromT = from.transforms[id];
+                PoseTransform toT = to.transforms[id];
+                if (fromT == null || toT == null)
+                {
+                    return;
+                }
 
-                Vector3 position = bone.transform.localPosition;
-                controllerNode["position"]["x"].AsFloat = position.x;
-                controllerNode["position"]["y"].AsFloat = position.y;
-                controllerNode["position"]["z"].AsFloat = position.z;
-                Vector3 eulerAngles = bone.transform.localEulerAngles;
-                controllerNode["rotation"]["x"].AsFloat = eulerAngles.x;
-                controllerNode["rotation"]["y"].AsFloat = eulerAngles.y;
-                controllerNode["rotation"]["z"].AsFloat = eulerAngles.z;
-
-
-                saveArray.Add(controllerNode);
+                JSONStorable storable = atom.GetStorableByID(id);
+                storable.transform.localPosition = Vector3.Lerp(fromT.localPosition, toT.localPosition, alpha);
+                storable.transform.localRotation = Quaternion.Lerp(fromT.localRotation, toT.localRotation, alpha);
             });
-
-            person.freeControllers.ToList().ForEach((controller) =>
-            {
-                JSONClass controllerNode = new JSONClass();
-                controllerNode["id"] = controller.storeId;
-                controllerNode["bone"].AsBool = false;
-
-                Vector3 position = controller.transform.localPosition;
-                controllerNode["position"]["x"].AsFloat = position.x;
-                controllerNode["position"]["y"].AsFloat = position.y;
-                controllerNode["position"]["z"].AsFloat = position.z;
-
-                Vector3 eulerAngles = controller.transform.localEulerAngles;
-                controllerNode["rotation"]["x"].AsFloat = eulerAngles.x;
-                controllerNode["rotation"]["y"].AsFloat = eulerAngles.y;
-                controllerNode["rotation"]["z"].AsFloat = eulerAngles.z;
-
-                saveArray.Add(controllerNode);
-            });
-            return obj;
         }
 
     }

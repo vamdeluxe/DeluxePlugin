@@ -10,332 +10,215 @@ namespace DeluxePlugin.Dollmaster
 {
     public class MontageController : BaseModule
     {
-        List<string> ignoredTypes = new List<string>()
-        {
-            "VRController",
-            "WindowCamera",
-            "CoreControl",
-            "PlayerNavigationPanel",
-        };
-
         public List<Montage> montages = new List<Montage>();
-
-        JSONStorableStringChooser montageChoice;
 
         PoseController poseController;
 
-        Montage currentMontage;
+        public Montage currentMontage;
 
-        UIDynamicButton nextMontageButton;
+        public JSONStorableUrl montagePath;
+        UIDynamicButton poseButton;
 
-        UIDynamicPopup poseChoicePopup;
-        UIDynamicButton addPoseButton;
-        UIDynamicButton deletePoseButton;
-        UIDynamicButton clearPosesButton;
+        Color accessButtonColor = new Color(0.05f, 0.35f, 0.08f);
+        Color accessButtonColorDisabled = new Color(0.25f, 0.25f, 0.25f);
+        Color accessTextColor = new Color(1, 1, 1);
+        Color accessTextColorDisabled = new Color(0.5f, 0.5f, 0.5f);
 
         public MontageController(DollmasterPlugin dm, PoseController poseController) : base(dm)
         {
-            this.poseController = poseController;
-
-            UIDynamicButton saveButton = dm.CreateButton("Create Montage", true);
-            saveButton.button.onClick.AddListener(() =>
+            montagePath = new JSONStorableUrl("montagePath", DollmasterPlugin.VAMASUTRA_PATH);
+            dm.RegisterUrl(montagePath);
+            UIDynamicButton selectMontageFolderButton = dm.CreateButton("Select Montage Folder", true);
+            selectMontageFolderButton.button.onClick.AddListener(() =>
             {
-                SuperController.singleton.currentSaveDir = SuperController.singleton.currentLoadDir;
-
-                string name = "Montage " + montages.Count;
-                Montage montage = new Montage(name, GetMontageAtoms());
-                montages.Add(montage);
-
-                montageChoice.SetVal(name);
-                montageChoice.choices = GetMontageNamesList();
-
-                currentMontage = montage;
-
-                nextMontageButton.gameObject.SetActive(true);
-                poseController.nextPoseButton.gameObject.SetActive(true);
+                SuperController.singleton.directoryBrowserUI.defaultPath = SuperController.singleton.savesDir;
+                SuperController.singleton.directoryBrowserUI.showDirs = true;
+                SuperController.singleton.directoryBrowserUI.showFiles = false;
+                SuperController.singleton.directoryBrowserUI.selectDirectory = true;
+                SuperController.singleton.directoryBrowserUI.SetTextEntry(true);
+                SuperController.singleton.directoryBrowserUI.Show((path) => {
+                    montagePath.SetVal(path);
+                    LoadMontagesFromPath(path);
+                });
             });
 
-            montageChoice = new JSONStorableStringChooser("montage", GetMontageNamesList(), "", "Select Montage", (string montageName)=>
-            {
-                Montage found = FindMontageByName(montageName);
-                if (found == null)
-                {
-                    //SuperController.LogError("montage not found " + montageName);
-                    SetPoseUIActive(false);
-                    return;
-                }
+            UIDynamicButton montageButton = ui.CreateButton("Random Montage", 200, 50);
+            montageButton.button.onClick.AddListener(RandomMontage);
+            montageButton.transform.Translate(0, 0.3f, 0, Space.Self);
+            UI.ColorButton(montageButton, accessTextColor, accessButtonColor);
 
-                float prevThrustValue = dm.thrustController.slider.slider.value;
-
-                found.Apply();
-                currentMontage = found;
-                Debug.Log("Applying Montage " + montageName);
-                poseController.SetMontage(found);
-
-                dm.thrustController.slider.slider.value = prevThrustValue;
-
-                nextMontageButton.gameObject.SetActive(true);
-                poseController.nextPoseButton.gameObject.SetActive(true);
-
-                SetPoseUIActive(true);
-            });
-            dm.RegisterStringChooser(montageChoice);
-            //montageChoice.storeType = JSONStorableParam.StoreType.Appearance;
-
-            nextMontageButton = dm.ui.CreateButton("Next Montage", 300, 80);
-            nextMontageButton.transform.Translate(0, -0.1f, 0, Space.Self);
-            nextMontageButton.buttonColor = new Color(0.4f, 0.3f, 0.05f);
-            nextMontageButton.textColor = new Color(1, 1, 1);
-            nextMontageButton.button.onClick.AddListener(() =>
-            {
-                if (montages.Count == 0)
-                {
-                    return;
-                }
-
-                int index = montageChoice.choices.IndexOf(montageChoice.val);
-                int nextIndex = index + 1;
-                if (nextIndex >= montageChoice.choices.Count)
-                {
-                    nextIndex = 0;
-                }
-
-                string choice = montageChoice.choices[nextIndex];
-                montageChoice.SetVal(choice);
-
-                poseController.StopCurrentAnimation();
-            });
-            nextMontageButton.gameObject.SetActive(false);
-
-            dm.CreateSpacer(true).height = 25;
-            dm.CreatePopup(montageChoice, true);
-            montageChoice.popup.onOpenPopupHandlers += () => {
-                montageChoice.choices = GetMontageNamesList();
-            };
-
-            dm.CreateButton("Update Selected Montage", true).button.onClick.AddListener(() =>
-            {
-                if (currentMontage != null)
-                {
-                    currentMontage.montageJSON = GetMontageAtoms();
-                }
-            });
-
-            //dm.CreateButton("Clear Montages", true).button.onClick.AddListener(() =>
-            //{
-            //    montages.Clear();
-            //    currentMontage = null;
-            //    poseController.SetMontage(null);
-
-            //    nextMontageButton.gameObject.SetActive(false);
-            //    poseController.nextPoseButton.gameObject.SetActive(false);
-            //});
-
-            dm.CreateButton("Delete Selected Montage", true).button.onClick.AddListener(()=>
-            {
-                if (currentMontage == null)
-                {
-                    return;
-                }
-
-                montages.Remove(currentMontage);
-                currentMontage = null;
-                poseController.SetMontage(null);
-                montageChoice.SetVal("");
-
-                if (montages.Count == 0)
-                {
-                    nextMontageButton.gameObject.SetActive(false);
-                    poseController.nextPoseButton.gameObject.SetActive(false);
-                }
-                else
-                {
-                    montageChoice.SetVal(montages[0].name);
-                }
-            });
-
-
-            dm.CreateSpacer(true).height = 50;
-
-            poseChoicePopup = dm.CreatePopup(poseController.poseChoice, true);
-            poseChoicePopup.label = "Select Pose";
-            poseChoicePopup.popup.onOpenPopupHandlers += () =>
-            {
-                if (currentMontage == null)
-                {
-                    poseController.poseChoice.choices = new List<string>();
-                    return;
-                }
-                poseController.poseChoice.choices = currentMontage.GetPoseNames();
-            };
-
-            dm.CreateSpacer(true).height = 25;
-
-            addPoseButton = dm.CreateButton("Add Pose", true);
-            addPoseButton.button.onClick.AddListener(() =>
-            {
-                if (currentMontage == null)
-                {
-                    return;
-                }
-
-                currentMontage.AddPose(PoseController.GetLocalPose(atom));
-            });
-
-            deletePoseButton = dm.CreateButton("Delete Selected Pose", true);
-            deletePoseButton.button.onClick.AddListener(() =>
-            {
-                if (currentMontage == null)
-                {
-                    return;
-                }
-
-                JSONClass pose = poseController.GetPoseFromName(poseController.poseChoice.val);
-                if (pose == null)
-                {
-                    return;
-                }
-
-                currentMontage.poses.Remove(pose);
-            });
-
-            //clearPosesButton = dm.CreateButton("Clear Poses", true);
-            //clearPosesButton.button.onClick.AddListener(() =>
-            //{
-            //    if (currentMontage == null)
-            //    {
-            //        return;
-            //    }
-
-            //    currentMontage.poses.Clear();
-            //    poseController.poseChoice.choices = new List<string>();
-            //});
-
-
-            SetPoseUIActive(false);
+            poseButton = ui.CreateButton("Random Pose", 200, 50);
+            poseButton.button.onClick.AddListener(RandomPose);
+            poseButton.transform.Translate(0.3f, 0.3f, 0, Space.Self);
+            UI.ColorButton(poseButton, accessTextColor, accessButtonColor);
         }
 
-        protected override void OnContainingAtomRenamed(string oldName, string newName)
+        public override void Update()
         {
-            //Debug.Log("atom name changed from " + oldName + " to " + newName);
-            montages.ForEach((montage) =>
+            if (currentMontage!=null && currentMontage.poses.Count>1)
             {
-                for(int i=0; i < montage.montageJSON.Count; i++)
-                {
-                    JSONClass atomNode = montage.montageJSON[i].AsObject;
-                    if (atomNode["id"].Value == oldName)
-                    {
-                        atomNode["id"] = newName;
-                    }
-                }
-            });
-        }
-
-        void SetPoseUIActive(bool active)
-        {
-            //  hacky way to hide something since SetActive won't work here
-            Vector3 activeScale = active ? Vector3.one : Vector3.zero;
-            poseChoicePopup.transform.localScale = activeScale;
-            addPoseButton.transform.localScale = activeScale;
-            deletePoseButton.transform.localScale = activeScale;
-            //clearPosesButton.transform.localScale = activeScale;
-        }
-
-        public void Load(JSONArray montageJSON)
-        {
-            int total = montageJSON.Count;
-            for(int i=0; i<total; i++)
-            {
-                JSONClass montageNode = montageJSON[i].AsObject;
-                string name = montageNode["name"];
-                JSONArray positions = montageNode["positions"].AsArray;
-                Montage montage = new Montage(name, positions);
-                montages.Add(montage);
-
-                JSONArray posesNode = montageNode["poses"].AsArray;
-                if (posesNode != null)
-                {
-                    for (int s = 0; s < posesNode.Count; s++)
-                    {
-                        JSONClass poseNode = posesNode[s].AsObject;
-                        montage.AddPose(poseNode);
-                    }
-                }
-            }
-        }
-
-        public void PostRestore()
-        {
-            montageChoice.choices = GetMontageNamesList();
-
-            if (montageChoice.val != montageChoice.defaultVal)
-            {
-                currentMontage = FindMontageByName(montageChoice.val);
-                if (currentMontage != null)
-                {
-                    poseController.SetMontage(currentMontage);
-                }
-            }
-
-            if(montageChoice.choices.Count > 0){
-                nextMontageButton.gameObject.SetActive(true);
-                poseController.nextPoseButton.gameObject.SetActive(true);
+                poseButton.button.enabled = true;
+                poseButton.buttonColor = accessButtonColor;
+                poseButton.textColor = accessTextColor;
             }
             else
             {
-                nextMontageButton.gameObject.SetActive(false);
-                poseController.nextPoseButton.gameObject.SetActive(false);
+                poseButton.button.enabled = false;
+                poseButton.buttonColor = accessButtonColorDisabled;
+                poseButton.textColor = accessTextColorDisabled;
             }
         }
 
-        public List<string> GetMontageNamesList()
+        public void LoadMontagesFromPath(string path)
         {
-            return montages.Select((montage) =>
+            montages = new List<Montage>();
+            List<string> files = SuperController.singleton.GetFilesAtPath(path, "*.json").ToList();
+            files.ForEach(fileName =>
             {
-                return montage.name;
-            }).ToList();
-        }
-
-        public JSONArray GetJSON()
-        {
-            JSONArray montageArray = new JSONArray();
-            montages.ForEach((montage) =>
-            {
-                montageArray.Add(montage.GetJSON());
+                int periodCount = fileName.Count(f => f == '.');
+                if (periodCount == 1)
+                {
+                    montages.Add(new Montage(atom, fileName));
+                }
             });
-            return montageArray;
         }
 
-        public Montage FindMontageByName(string name)
+        public void RandomMontage()
         {
-            if (montages.Count == 0)
+            currentMontage = SelectRandomMontage();
+            if (currentMontage != null)
+            {
+                //SuperController.LogMessage("selected montage " + currentMontage.name);
+                //SuperController.LogMessage(currentMontage.poses.Count().ToString());
+                currentMontage.Activate(dm);
+            }
+        }
+
+        public Montage SelectRandomMontage()
+        {
+            if (montages.Count <= 0)
             {
                 return null;
             }
 
-            return montages.Find((montage) =>
+            if (montages.Count == 1)
             {
-                return montage.name == name;
-            });
+                return montages[0];
+            }
+
+            if (currentMontage == null)
+            {
+                int randomIndex = UnityEngine.Random.Range(0, montages.Count);
+                return montages[randomIndex];
+            }
+
+            int currentMontageIndex = montages.FindIndex((montage=>montage==currentMontage));
+
+            int index = UnityEngine.Random.Range(0, montages.Count);
+            while (index == currentMontageIndex)
+            {
+                index = UnityEngine.Random.Range(0, montages.Count);
+            }
+
+            return montages[index];
         }
 
-        JSONArray GetMontageAtoms()
+        public void RandomPose()
         {
-            JSONArray atoms = new JSONArray();
+            if (currentMontage == null)
+            {
+                return;
+            }
 
-            SuperController.singleton.GetAtoms()
-            .Where((atom) =>
+            Pose pose = currentMontage.SelectRandomPose();
+            if (pose != null)
             {
-                return ignoredTypes.Contains(atom.type) == false;
-            })
-            .ToList()
-            .ForEach((atom) =>
-            {
-                JSONClass save = SuperController.singleton.GetSaveJSON(atom, true, false);
-                JSONClass atomJSON = save["atoms"].AsArray[0].AsObject;
-                atoms.Add(atomJSON);
-            });
-            return atoms;
+                dm.poseController.AnimateToPose(pose);
+            }
         }
+
+        public void NextThruster()
+        {
+            AnimationPattern ap = dm.thrustController.ap;
+            if (ap == null)
+            {
+                return;
+            }
+
+            Atom apAtom = ap.containingAtom;
+            MoveProducer mp = apAtom.GetStorableByID("AnimatedObject") as MoveProducer;
+
+            Atom otherPerson = DollmasterPlugin.GetSomeoneElse(mp.receiver.containingAtom);
+            if (otherPerson == null)
+            {
+                return;
+            }
+
+            Atom otherOtherPerson = DollmasterPlugin.GetSomeoneElse(otherPerson);
+            if (otherOtherPerson == null)
+            {
+                return;
+            }
+
+            dm.thrustController.ConfigureAPSteps(otherPerson, otherOtherPerson);
+
+        }
+
+        public static void BeginMontage(DollmasterPlugin dm, JSONNode montageJSON)
+        {
+            dm.poseController.StopCurrentAnimation();
+
+            JSONArray atoms = montageJSON["atoms"].AsArray;
+
+            JSONClass person1Pose = null;
+            JSONClass person2Pose = null;
+            for (int i = 0; i < atoms.Count; i++)
+            {
+                JSONClass atomObj = atoms[i].AsObject;
+                string id = atomObj["id"].Value;
+                if (id == "Person")
+                {
+                    person1Pose = atomObj;
+                }
+                if (id == "Person#2")
+                {
+                    person2Pose = atomObj;
+                }
+            }
+
+            Atom atom = dm.containingAtom;
+
+            if (person1Pose != null)
+            {
+                atom.PreRestore();
+                atom.RestoreTransform(person1Pose);
+                atom.Restore(person1Pose, restorePhysical: true, restoreAppearance: false, restoreCore: false);
+                atom.LateRestore(person1Pose, restorePhysical: true, restoreAppearance: false, restoreCore: false);
+                atom.PostRestore();
+            }
+
+            Atom otherPerson = DollmasterPlugin.GetSomeoneElse(atom);
+
+            if (person2Pose != null && otherPerson != null)
+            {
+                otherPerson.PreRestore();
+                otherPerson.RestoreTransform(person2Pose);
+                otherPerson.Restore(person2Pose, restorePhysical: true, restoreAppearance: false, restoreCore: false);
+                otherPerson.LateRestore(person2Pose, restorePhysical: true, restoreAppearance: false, restoreCore: false);
+                otherPerson.PostRestore();
+            }
+
+            SuperController.singleton.PauseSimulation(5, "Loading Sutra");
+
+            dm.thrustController.Clear();
+            dm.thrustController.GenerateThrustAtoms();
+
+            ExpressionController.ZeroPoseMorphs(atom);
+            if (otherPerson != null)
+            {
+                ExpressionController.ZeroPoseMorphs(otherPerson);
+            }
+        }
+
     }
 }

@@ -3,6 +3,7 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using SimpleJSON;
+using System.Linq;
 
 namespace DeluxePlugin.Dollmaster
 {
@@ -11,6 +12,7 @@ namespace DeluxePlugin.Dollmaster
         public static string PLUGIN_PATH;
         public static string ASSETS_PATH;
         public static string LOAD_PATH;
+        public static string VAMASUTRA_PATH;
 
         public Personas personas;
         public Personality personality;
@@ -23,6 +25,7 @@ namespace DeluxePlugin.Dollmaster
         public Expressions expressions;
         public ExpressionController expressionController;
         public ThrustController thrustController;
+        public ThrustAutoController thrustAutoController;
         public HeadController headController;
         public Arousal arousal;
         public BreathController breathController;
@@ -51,7 +54,10 @@ namespace DeluxePlugin.Dollmaster
 
                 PLUGIN_PATH = GetPluginPath();
                 ASSETS_PATH = PLUGIN_PATH + "/Assets";
+                VAMASUTRA_PATH = ASSETS_PATH + "/VAMasutra";
                 LOAD_PATH = SuperController.singleton.currentLoadDir;
+
+                headAudioSource = containingAtom.GetStorableByID("HeadAudioSource") as AudioSourceControl;
 
                 RegisterActions();
 
@@ -74,6 +80,8 @@ namespace DeluxePlugin.Dollmaster
 
                 thrustController = new ThrustController(this);
 
+                thrustAutoController = new ThrustAutoController(this);
+
                 breathController = new BreathController(this);
 
                 headController = new HeadController(this);
@@ -90,9 +98,7 @@ namespace DeluxePlugin.Dollmaster
 
                 new TopButtons(this);
 
-                new WorldUI(this);
-
-                headAudioSource = containingAtom.GetStorableByID("HeadAudioSource") as AudioSourceControl;
+                //new WorldUI(this);
 
                 CreateSpacer().height = 200;
 
@@ -131,56 +137,45 @@ namespace DeluxePlugin.Dollmaster
                 climaxTrigger.actionCallback();
             });
 
-            CreateSpacer(true);
-        }
 
-        public override JSONClass GetJSON(bool includePhysical = true, bool includeAppearance = true, bool forceStore = false)
-        {
-            JSONClass jSON = base.GetJSON(includePhysical, includeAppearance);
-            jSON["montages"] = montageController.GetJSON();
-            return jSON;
+            CreateSpacer(true);
+
+            CreateButton("Zero Pose Morphs", true).button.onClick.AddListener(() =>
+            {
+                ExpressionController.ZeroPoseMorphs(containingAtom);
+            });
         }
 
         public override void RestoreFromJSON(JSONClass jc, bool restorePhysical = true, bool restoreAppearance = true, JSONArray presetAtoms = null, bool setMissingToDefault = true)
         {
             base.RestoreFromJSON(jc, restorePhysical, restoreAppearance, presetAtoms);
-
-            if (jc["montages"] != null)
-            {
-                montageController.Load(jc["montages"].AsArray);
-            }
-
             dressController.OnRestore();
         }
 
         public override void PostRestore()
         {
             base.PostRestore();
-            montageController.PostRestore();
             config.Apply();
         }
 
         void Start()
         {
-            if(ps.personalityChoice.val != ps.personalityChoice.defaultVal)
-            {
-                personality = personas.GetPersonality(ps.personalityChoice.val);
-            }
-            else
-            {
-                ps.personalityChoice.SetVal(personas.GetRandomPersonality().name);
-            }
+            //if(ps.personalityChoice.val != ps.personalityChoice.defaultVal)
+            //{
+            //    personality = personas.GetPersonality(ps.personalityChoice.val);
+            //}
+            //else
+            //{
+            //    ps.personalityChoice.SetVal(personas.GetRandomPersonality().name);
+            //}
+
+            montageController.LoadMontagesFromPath(montageController.montagePath.val);
         }
 
         void Update()
         {
             try
             {
-                if (ui != null)
-                {
-                    ui.Update();
-                }
-
                 modules.ForEach((module) =>
                 {
                     module.Update();
@@ -197,6 +192,14 @@ namespace DeluxePlugin.Dollmaster
             catch(Exception e)
             {
                 SuperController.LogError("Exception caught: " + e);
+            }
+        }
+
+        void LateUpdate()
+        {
+            if (ui != null)
+            {
+                ui.Update();
             }
         }
 
@@ -218,10 +221,6 @@ namespace DeluxePlugin.Dollmaster
                 {
                     personality.OnDestroy();
                 }
-
-                //SuperController singleton = SuperController.singleton;
-                //singleton.onAtomUIDRenameHandlers = (SuperController.OnAtomUIDRename)Delegate.Remove(singleton.onAtomUIDRenameHandlers, new SuperController.OnAtomUIDRename(HandleRename));
-
             }
             catch (Exception e)
             {
@@ -278,7 +277,7 @@ namespace DeluxePlugin.Dollmaster
         public void TriggerClimax()
         {
             expressionController.TriggerClimax();
-            poseController.SelectRandomPose();
+            montageController.RandomPose();
         }
 
         string GetPluginPath()
@@ -320,6 +319,20 @@ namespace DeluxePlugin.Dollmaster
             {
                 module.HandleRename(oldId, newId);
             });
+        }
+
+        public static Atom GetSomeoneElse(Atom notThisPerson)
+        {
+            List<Atom> otherPeople = SuperController.singleton.GetAtoms().Where(other =>
+            {
+                return other.type == "Person" && other != notThisPerson;
+            }).ToList();
+
+            if (otherPeople.Count > 0)
+            {
+                return otherPeople[0];
+            }
+            return null;
         }
     }
 }

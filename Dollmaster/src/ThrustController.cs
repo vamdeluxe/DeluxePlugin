@@ -11,7 +11,7 @@ namespace DeluxePlugin.Dollmaster
     public class ThrustController : BaseModule
     {
         JSONStorableBool thrustEnabled;
-        AnimationPattern ap;
+        public AnimationPattern ap;
         public UIDynamicSlider slider;
         Slider originalSlider;
 
@@ -99,61 +99,7 @@ namespace DeluxePlugin.Dollmaster
             createButton.buttonColor = new Color(0.4f, 0.2f, 0.245f, 1.0f);
             createButton.textColor = new Color(1, 1, 1);
 
-            createButton.button.onClick.AddListener(() =>
-            {
-                dm.StartCoroutine(CreateAtom("AnimationPattern", "Thrust AP", (apAtom) =>
-                {
-                    AnimationPattern ap = apAtom.GetStorableByID("AnimationPattern") as AnimationPattern;
-
-                    ap.autoSyncStepNamesJSON.SetVal(false);
-
-                    thrustAtomChooser.SetVal(apAtom.name);
-
-                    if (ap.steps.Length >= 2)
-                    {
-                        return;
-                    }
-
-                    FreeControllerV3 hipControl = atom.GetStorableByID("hipControl") as FreeControllerV3;
-                    apAtom.mainController.transform.SetPositionAndRotation(hipControl.transform.position, hipControl.transform.rotation);
-                    apAtom.SelectAtomParent(atom);
-
-                    //ap.animatedTransform = hipControl.transform;
-
-                    MoveProducer mp = apAtom.GetStorableByID("AnimatedObject") as MoveProducer;
-                    mp.SetReceiverByName(atom.name + ":hipControl");
-
-                    AnimationStep stepA = ap.CreateStepAtPosition(0);
-                    stepA.containingAtom.ClearParentAtom();
-                    stepA.containingAtom.mainController.transform.position = apAtom.mainController.transform.position;
-                    stepA.containingAtom.mainController.transform.rotation = apAtom.mainController.transform.rotation;
-                    //stepA.containingAtom.SetParentAtom(apAtom.name);
-
-                    AnimationStep stepB = ap.CreateStepAtPosition(1);
-                    stepB.containingAtom.ClearParentAtom();
-                    FreeControllerV3 abdomen2Control = atom.GetStorableByID("abdomen2Control") as FreeControllerV3;
-
-                    stepB.containingAtom.mainController.transform.position = abdomen2Control.transform.position;
-                    stepB.containingAtom.mainController.transform.rotation = apAtom.mainController.transform.rotation;
-
-                    apAtom.mainController.transform.Translate(0, 0, -0.2f, Space.Self);
-
-                    stepA.containingAtom.mainController.currentPositionState = FreeControllerV3.PositionState.ParentLink;
-                    stepA.containingAtom.mainController.currentRotationState = FreeControllerV3.RotationState.ParentLink;
-                    Rigidbody rba = SuperController.singleton.RigidbodyNameToRigidbody(apAtom.name + ":control");
-                    stepA.containingAtom.mainController.SelectLinkToRigidbody(rba, FreeControllerV3.SelectLinkState.PositionAndRotation);
-
-                    stepB.containingAtom.mainController.currentPositionState = FreeControllerV3.PositionState.ParentLink;
-                    stepB.containingAtom.mainController.currentRotationState = FreeControllerV3.RotationState.ParentLink;
-                    Rigidbody rbb = SuperController.singleton.RigidbodyNameToRigidbody(apAtom.name + ":control");
-                    stepB.containingAtom.mainController.SelectLinkToRigidbody(rbb, FreeControllerV3.SelectLinkState.PositionAndRotation);
-
-                    UISetupState(apAtom);
-
-                    ap.SyncStepNames();
-
-                }, true));
-            });
+            createButton.button.onClick.AddListener(GenerateThrustAtoms);
 
             selectButton = dm.ui.CreateButton("Select Animation Pattern To Control", 400, 120);
             selectButton.transform.Translate(0.52f, 0.15f, 0, Space.Self);
@@ -184,6 +130,8 @@ namespace DeluxePlugin.Dollmaster
             });
 
             dm.CreateSpacer();
+
+            GenerateThrustAtoms();
         }
 
         List<string> GetAnimationPatternNames()
@@ -254,6 +202,7 @@ namespace DeluxePlugin.Dollmaster
         {
             base.OnDestroy();
             RestoreOriginalSlider();
+            Clear();
         }
 
         public float sliderValue
@@ -262,6 +211,112 @@ namespace DeluxePlugin.Dollmaster
             {
                 return slider.slider.value;
             }
+        }
+
+        public void Clear()
+        {
+            if (ap != null)
+            {
+                SuperController.singleton.RemoveAtom(ap.containingAtom);
+            }
+        }
+
+        public void GenerateThrustAtoms()
+        {
+            dm.StartCoroutine(CreateAtom("AnimationPattern", "Thrust AP", (apAtom) =>
+            {
+                AnimationPattern ap = apAtom.GetStorableByID("AnimationPattern") as AnimationPattern;
+                this.ap = ap;
+
+                ap.autoSyncStepNamesJSON.SetVal(false);
+
+                thrustAtomChooser.SetVal(apAtom.name);
+
+                if (ap.steps.Length >= 2)
+                {
+                    return;
+                }
+
+                ConfigureAPSteps(atom);
+
+                UISetupState(apAtom);
+
+                ap.SyncStepNames();
+                ap.containingAtom.hidden = true;
+                ap.hideCurveUnlessSelected = true;
+                ap.HideAllSteps();
+
+            }, true));
+        }
+
+        public void ConfigureAPSteps(Atom receiverAtom, Atom partner=null)
+        {
+            ap.DestroyAllSteps();
+
+            Atom apAtom = ap.containingAtom;
+
+            FreeControllerV3 hipControl= receiverAtom.GetStorableByID("hipControl") as FreeControllerV3;
+
+            //apAtom.containingAtom.mainController.transform.position = new Vector3();
+            //apAtom.mainController.transform.rotation = new Quaternion();
+            //apAtom.mainController.transform.SetPositionAndRotation(new Vector3(), new Quaternion());
+
+            apAtom.mainController.transform.SetPositionAndRotation(hipControl.transform.position, hipControl.transform.rotation);
+            apAtom.SelectAtomParent(receiverAtom);
+
+            MoveProducer mp = apAtom.GetStorableByID("AnimatedObject") as MoveProducer;
+            mp.SetReceiverByName(receiverAtom.name + ":hipControl");
+
+            Vector3 stepATarget = hipControl.transform.position;
+            Quaternion stepARotation = hipControl.transform.rotation;
+
+            Vector3 stepBTarget = (receiverAtom.GetStorableByID("hip") as DAZBone).transform.position;
+            Quaternion stepBRotation = hipControl.transform.rotation;
+
+            if (partner != null)
+            {
+                DAZCharacterSelector partnerCharacter = partner.GetStorableByID("geometry") as DAZCharacterSelector;
+                if(partnerCharacter.gender == DAZCharacterSelector.Gender.Male)
+                {
+                    FreeControllerV3 penisTipControl = partner.GetStorableByID("penisTipControl") as FreeControllerV3;
+                    FreeControllerV3 penisBaseControl = partner.GetStorableByID("penisBaseControl") as FreeControllerV3;
+                    stepATarget = penisBaseControl.transform.position;
+                    stepBTarget = penisTipControl.transform.position;
+                }
+                else
+                {
+                    FreeControllerV3 penisBaseControl = receiverAtom.GetStorableByID("penisBaseControl") as FreeControllerV3;
+                    stepATarget = penisBaseControl.transform.position;
+                    stepBTarget = (partner.GetStorableByID("hip") as DAZBone).transform.position;
+                }
+            }
+            else
+            {
+                FreeControllerV3 chestControl = receiverAtom.GetStorableByID("chestControl") as FreeControllerV3;
+                stepBTarget = Vector3.Lerp(stepATarget, chestControl.transform.position, 0.3f);
+            }
+
+            AnimationStep stepA = ap.CreateStepAtPosition(0);
+            stepA.containingAtom.ClearParentAtom();
+            stepA.containingAtom.mainController.transform.position = stepATarget;
+            stepA.containingAtom.mainController.transform.rotation = stepARotation;
+
+            AnimationStep stepB = ap.CreateStepAtPosition(1);
+            stepB.containingAtom.ClearParentAtom();
+            stepB.containingAtom.mainController.transform.position = stepBTarget;
+            stepB.containingAtom.mainController.transform.rotation = stepBRotation;
+
+            //apAtom.mainController.transform.Translate(0, 0, -0.2f, Space.Self);
+
+            stepA.containingAtom.mainController.currentPositionState = FreeControllerV3.PositionState.ParentLink;
+            stepA.containingAtom.mainController.currentRotationState = FreeControllerV3.RotationState.ParentLink;
+            Rigidbody rba = SuperController.singleton.RigidbodyNameToRigidbody(apAtom.name + ":control");
+            stepA.containingAtom.mainController.SelectLinkToRigidbody(rba, FreeControllerV3.SelectLinkState.PositionAndRotation);
+
+            stepB.containingAtom.mainController.currentPositionState = FreeControllerV3.PositionState.ParentLink;
+            stepB.containingAtom.mainController.currentRotationState = FreeControllerV3.RotationState.ParentLink;
+            Rigidbody rbb = SuperController.singleton.RigidbodyNameToRigidbody(apAtom.name + ":control");
+            stepB.containingAtom.mainController.SelectLinkToRigidbody(rbb, FreeControllerV3.SelectLinkState.PositionAndRotation);
         }
     }
 }

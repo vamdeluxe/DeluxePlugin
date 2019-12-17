@@ -35,6 +35,9 @@
     <Reference Include="Assembly-CSharp">
       <HintPath>..\..\..\VaM_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
+    <Reference Include="Assembly-UnityScript">
+      <HintPath>..\..\..\VaM_Data\Managed\Assembly-UnityScript.dll</HintPath>
+    </Reference>
     <Reference Include="Mono.Cecil">
       <HintPath>..\..\..\VaM_Data\Managed\Mono.Cecil.dll</HintPath>
     </Reference>
@@ -285,6 +288,7 @@
     <Folder Include="Shared\" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AmbientLightRig\AmbientLightRig.cs" />
     <Compile Include="AnimationGraph\AnimationGraph.cs" />
     <Compile Include="AnimationGraph\Node.cs" />
     <Compile Include="AnimationGraph\Transition.cs" />
@@ -302,6 +306,7 @@
     <Compile Include="Dollmaster\src\DressController.cs" />
     <Compile Include="Dollmaster\src\KissController.cs" />
     <Compile Include="Dollmaster\src\SFXController.cs" />
+    <Compile Include="Dollmaster\src\ThrustAutoController.cs" />
     <Compile Include="Dollmaster\src\TopButtons.cs" />
     <Compile Include="Dollmaster\src\Arousal.cs" />
     <Compile Include="DollMaker\BaseModule.cs" />
@@ -333,6 +338,7 @@
     <Compile Include="EmotionEngine\MorphSelectUI.cs" />
     <Compile Include="HeadIdle\HeadIdle.cs" />
     <Compile Include="JointMorphControl\JointMorphControl.cs" />
+    <Compile Include="MorphAnimation\MorphAnimation.cs" />
     <Compile Include="MorphGroup\MorphGroup.cs" />
     <Compile Include="Outliner\Outliner.cs" />
     <Compile Include="PoseToPose\Keyframe.cs" />
@@ -355,7 +361,22 @@
     <Compile Include="MorphMixer\MorphMixer.cs" />
     <Compile Include="Powertools\Clone.cs" />
     <Compile Include="Powertools\Delete.cs" />
+    <Compile Include="PresetRandomizer\PresetRandomizer.cs" />
+    <Compile Include="Qualia\src\Breathing.cs" />
+    <Compile Include="Qualia\src\modules\BlinkModule.cs" />
+    <Compile Include="Qualia\src\modules\BodyLanguageModule.cs" />
+    <Compile Include="Qualia\src\modules\GazeModule.cs" />
+    <Compile Include="Qualia\src\modules\IQualiaModule.cs" />
+    <Compile Include="Qualia\src\EyesLightAdaptation.cs" />
+    <Compile Include="Qualia\src\MorphAnimation.cs" />
+    <Compile Include="Qualia\src\PathExt.cs" />
+    <Compile Include="Qualia\src\SharedBehaviors.cs" />
     <Compile Include="Submotion\Submotion.cs" />
+    <Compile Include="Synthia\src\AnimationBank.cs" />
+    <Compile Include="Synthia\src\BvhFile.cs" />
+    <Compile Include="Synthia\src\BVHPlayer.cs" />
+    <Compile Include="Synthia\src\PathExt.cs" />
+    <Compile Include="Synthia\src\Synthia.cs" />
     <Compile Include="Templates\CycleForce.cs" />
     <Compile Include="Templates\Template.cs" />
     <Compile Include="Templates\TemplateStarter.cs" />
@@ -373,6 +394,8 @@
     <None Include="FullService\Fullservice.cslist" />
     <None Include="PoseToPose\PoseToPose.cslist" />
     <None Include="Powertools\PowerTools.cslist" />
+    <None Include="Qualia\Qualia.cslist" />
+    <None Include="Synthia\Synthia.cslist" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

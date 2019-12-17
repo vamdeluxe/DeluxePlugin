@@ -11,6 +11,7 @@ namespace DeluxePlugin.Dollmaster
     {
         public JSONStorableStringChooser personalityChoice;
         public string defaultPersonalityName = "Celeste";
+
         public PluginState(DollmasterPlugin dm)
         {
             personalityChoice = new JSONStorableStringChooser("personality", dm.personas.personalityNames, defaultPersonalityName, "Personality", (string choice)=>
@@ -18,11 +19,18 @@ namespace DeluxePlugin.Dollmaster
                 dm.SetPersonality(choice);
             });
 
-            dm.RegisterStringChooser(personalityChoice);
-            UIDynamicPopup personalityPopup = dm.CreatePopup(personalityChoice);
-            personalityPopup.popup.topButton.image.color = new Color(0.8f, 0.65f, 0.13f);
+            dm.SetPersonality(personalityChoice.val);
 
-            dm.CreateSpacer();
+            dm.RegisterStringChooser(personalityChoice);
+
+            UIPopup popup = dm.ui.CreatePopup("Personality", 300, 80);
+            popup.transform.Translate(0.7f, 0.065f, 0, Space.Self);
+            popup.showSlider = true;
+            personalityChoice.popup = popup;
+
+            //UIDynamicPopup personalityPopup = dm.CreatePopup(personalityChoice);
+            //personalityPopup.popup.topButton.image.color = new Color(0.8f, 0.65f, 0.13f);
+            //dm.CreateSpacer();
         }
     }
 }

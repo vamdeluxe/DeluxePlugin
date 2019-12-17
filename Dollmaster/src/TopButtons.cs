@@ -1,61 +1,114 @@
 ﻿using System;
 using UnityEngine;
+using UnityEngine.Events;
 using System.Collections;
 using System.Collections.Generic;
 using SimpleJSON;
 using System.Linq;
+using MeshVR;
 
 namespace DeluxePlugin.Dollmaster
 {
     public class TopButtons : BaseModule
     {
+        int column = 0;
+        int row = 0;
+
         public TopButtons(DollmasterPlugin dm) : base(dm)
         {
-            Color accessButtonColor = new Color(0.05f, 0.15f, 0.08f);
-            Color accessTextColor = new Color(0.4f, 0.6f, 0.45f);
-
-            float xSpacing = 0.22f;
-
-            UIDynamicButton selectButton = ui.CreateButton("Select Person", 100, 40);
-            selectButton.button.onClick.AddListener(() =>
+            AddButton("Select Person", () =>
             {
                 SuperController.singleton.editModeToggle.isOn = true;
-                SuperController.singleton.ShowMainHUD();
+                SuperController.singleton.ShowMainHUDAuto();
                 SuperController.singleton.ClearSelection();
                 SuperController.singleton.SelectController(atom.mainController);
             });
-            selectButton.transform.Translate(0, 0.3f, 0, Space.Self);
-            UI.ColorButton(selectButton, accessTextColor, accessButtonColor);
 
-            UIDynamicButton loadLookButton = ui.CreateButton("Change Look", 100, 40);
-            loadLookButton.button.onClick.AddListener(() =>
-            {
-                SuperController.singleton.ShowMainHUD();
-                atom.LoadAppearancePresetDialog();
-            });
-            loadLookButton.transform.Translate(xSpacing, 0.3f, 0, Space.Self);
-            UI.ColorButton(loadLookButton, accessTextColor, accessButtonColor);
+            // Shit's broken yo.
 
-            UIDynamicButton toggleDressButton = ui.CreateButton("Dress/Undress", 100, 40);
-            toggleDressButton.transform.Translate(xSpacing * 2, 0.3f, 0, Space.Self);
-            toggleDressButton.button.onClick.AddListener(() =>
+            //AddButton("Change Look", () =>
+            //{
+            //    SuperController.singleton.ShowMainHUDAuto();
+            //    PresetManager pm = atom.GetComponentInChildren<PresetManager>(includeInactive: true);
+            //    PresetManagerControlUI pmcui = atom.GetComponentInChildren<PresetManagerControlUI>(includeInactive: true);
+            //    if (pm != null && pmcui != null)
+            //    {
+            //        pm.itemType = PresetManager.ItemType.Atom;
+            //        pm.creatorName = null;
+            //        pm.storeFolderName = "Appearance";
+            //        pm.storeName = "Appearance";
+            //        pmcui.browsePresetsButton.onClick.Invoke();
+            //        //atom.LoadAppearancePresetDialog();
+            //    }
+            //    dm.dressController.OnRestore();
+            //});
+
+            //AddButton("Change Outfit", () =>
+            //{
+            //    SuperController.singleton.ShowMainHUDAuto();
+            //    PresetManager pm = atom.GetComponentInChildren<PresetManager>(includeInactive: true);
+            //    PresetManagerControlUI pmcui = atom.GetComponentInChildren<PresetManagerControlUI>(includeInactive: true);
+
+            //    if (pm != null && pmcui != null)
+            //    {
+            //        pm.itemType = PresetManager.ItemType.Custom;
+            //        pm.customPath = "Atom/Person/Clothing/";
+            //        pmcui.browsePresetsButton.onClick.Invoke();
+            //    }
+
+            //    dm.dressController.OnRestore();
+            //});
+
+            AddButton("Toggle Clothes", () =>
             {
                 dm.dressController.ToggleDressed();
             });
-            UI.ColorButton(toggleDressButton, accessTextColor, accessButtonColor);
 
-            UIDynamicButton exposeDressButton = ui.CreateButton("Expose Dress", 100, 40);
-            exposeDressButton.button.onClick.AddListener(() =>
+            AddButton("Select Pose", () =>
             {
-                dm.dressController.CycleDressExposed();
+                SuperController.singleton.ShowMainHUDAuto();
+                // TODO: Preset pose-loading is not working here.
+                string text = SuperController.singleton.savesDir + atom.type + "\\pose";
+                SuperController.singleton.fileBrowserUI.defaultPath = text;
+                SuperController.singleton.fileBrowserUI.SetTextEntry(b: false);
+                SuperController.singleton.fileBrowserUI.Show((path)=> {
+                    if (string.IsNullOrEmpty(path))
+                    {
+                        return;
+                    }
+                    atom.LoadPhysicalPreset(path);
+
+                    SuperController.singleton.PauseSimulation(5, "Loading Pose");
+
+                    AllJointsController ajc = atom.GetComponentInChildren<AllJointsController>(includeInactive: true);
+                    ajc.SetOnlyKeyJointsOn();
+                    dm.thrustController.Clear();
+                    dm.thrustController.GenerateThrustAtoms();
+                });
             });
-            exposeDressButton.transform.Translate(xSpacing * 3, 0.3f, 0, Space.Self);
-            UI.ColorButton(exposeDressButton, accessTextColor, accessButtonColor);
+
+            AddButton("VAMasutra", () =>
+            {
+                SuperController.singleton.ShowMainHUDAuto();
+                string sutraPath = DollmasterPlugin.ASSETS_PATH + "/VAMasutra";
+                SuperController.singleton.fileBrowserUI.defaultPath = sutraPath;
+                SuperController.singleton.fileBrowserUI.SetTextEntry(b: false);
+                SuperController.singleton.fileBrowserUI.Show((path) => {
+                    var montageJSON = JSON.Parse(SuperController.singleton.ReadFileIntoString(path)) as JSONClass;
+                    dm.montageController.currentMontage = null;
+                    MontageController.BeginMontage(dm, montageJSON);
+                });
+            });
+
+            AddButton("Cycle Thruster", () =>
+            {
+                dm.montageController.NextThruster();
+            });
 
             bool minimized = false;
 
             UIDynamicButton minimizeUIButton = ui.CreateButton("Minimize UI", 100, 40);
-            minimizeUIButton.transform.Translate(0.1f, -0.25f, 0, Space.Self);
+            minimizeUIButton.transform.Translate(0.1f, -0.1f, 0, Space.Self);
             UI.ColorButton(minimizeUIButton, Color.white, Color.black);
 
             Dictionary<GameObject, bool> priorActive = new Dictionary<GameObject, bool>();
@@ -81,10 +134,27 @@ namespace DeluxePlugin.Dollmaster
                 minimizeUIButton.gameObject.SetActive(true);
 
                 minimizeUIButton.label = minimized ? "Max UI" : "Minimize UI";
-
             });
+        }
 
+        public void AddButton(string name, UnityAction callback)
+        {
+            Color accessButtonColor = new Color(0.05f, 0.15f, 0.08f);
+            Color accessTextColor = new Color(0.4f, 0.6f, 0.45f);
+            float xSpacing = 0.22f;
+            float ySpacing = 0.05f;
 
+            UIDynamicButton button = ui.CreateButton(name, 100, 40);
+            button.button.onClick.AddListener(callback);
+            button.transform.Translate(column * xSpacing, 0.45f - row * ySpacing, 0, Space.Self);
+            UI.ColorButton(button, accessTextColor, accessButtonColor);
+
+            column++;
+            if(column >= 4)
+            {
+                column = 0;
+                row++;
+            }
         }
 
     }
