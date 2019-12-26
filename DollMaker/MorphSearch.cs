@@ -19,6 +19,7 @@ namespace DeluxePlugin.DollMaker
 
         const int MAX_MORPHS_PER_PAGE = 25;
         const int MAX_TERMS = 16;
+        bool switchSort = false;
 
         List<UIDynamicSlider> morphSliders = new List<UIDynamicSlider>();
         List<string> morphNames = new List<string>();
@@ -89,6 +90,21 @@ namespace DeluxePlugin.DollMaker
                 searchBox.text = "";
                 ClearSearch();
             });
+            
+            UIDynamicButton sortButton = ui.CreateButton("Sorted ByName", 60, 100, moduleUI);
+            sortButton.transform.localPosition = new Vector3(1035, -110, 0);
+            sortButton.button.onClick.AddListener(() =>
+            {
+                                                  	switchSort=!switchSort;
+                                                  	string storeSearch = searchBox.text;
+                                                  	searchBox.text = "";
+                                                  	if (switchSort){
+                                                  	sortButton.label="Sorted ByValue";
+                                                  	} else {
+                                                  	sortButton.label="Sorted ByName";
+                                                  	}
+                                                  	searchBox.text = storeSearch;
+            });
 
             VerticalLayoutGroup commonTermsGroup = ui.CreateVerticalLayout(220, 0, moduleUI);
             commonTermsGroup.transform.localPosition = new Vector3(-230, -200, 0);
@@ -149,6 +165,13 @@ namespace DeluxePlugin.DollMaker
 
                 foundMorphs.Add(morphControl.GetMorphByDisplayName(name));
             });
+            if (switchSort){
+            foreach(DAZMorph morph in foundMorphs.OrderByDescending(x => Mathf.Abs(x.appliedValue)))
+        	{
+            	foundMorphsSorted.Add(morph);
+        	}
+            foundMorphs = foundMorphsSorted;
+            }
 
 
             int pages = Mathf.FloorToInt((float)foundMorphs.Count / morphSliders.Count);
