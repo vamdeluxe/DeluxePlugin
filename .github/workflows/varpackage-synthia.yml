@@ -1,0 +1,28 @@
+name: Package Synthia
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Zip the release package
+      id: zip
+      run: |
+        mkdir -p publish/Custom/Scripts/VamDeluxe/Synthia/src
+        mkdir -p publish/Custom/Scripts/VamDeluxe/Synthia/Animations
+        cp -r Synthia/src/* publish/Custom/Scripts/VamDeluxe/Synthia/src/
+        cp -r Synthia/Animations/* publish/Custom/Scripts/VamDeluxe/Synthia/Animations/
+        cp Synthia/Synthia.cslist publish/Custom/Scripts/VamDeluxe/Synthia/
+        cp Synthia/meta.json publish/
+        sed -i 's/v0.0.0/v${{ github.run_number }}/' publish/meta.json
+        cd publish
+        zip -r "LFE.Synthia.${{ github.run_number }}.var" *
+    - name: GitHub release
+      uses: softprops/action-gh-release@v1
+      with:
+        draft: true
+        files: publish/LFE.Synthia.${{ github.run_number }}.var
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

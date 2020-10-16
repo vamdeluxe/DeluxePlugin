@@ -1,0 +1,27 @@
+ { 
+   "licenseType" : "CC BY-SA", 
+   "creatorName" : "LFE", 
+   "packageName" : "Synthia", 
+   "includeVersionsInReferences" : "true", 
+   "description" : "Selected person will walk to where you want them.",
+   "credits" : "VamDeluxe - original code.  ", 
+   "instructions" : "",
+   "promotionalLink" : "https://github.com/lfe999/DeluxePlugin",
+   "programVersion" : "1.20.0.0", 
+   "contentList" : [ 
+      "Custom\\Scripts\\VamDeluxe\\Synthia\\src\\AnimationBank.cs",
+      "Custom\\Scripts\\VamDeluxe\\Synthia\\src\\BvhFile.cs",
+      "Custom\\Scripts\\VamDeluxe\\Synthia\\src\\BVHPlayer.cs",
+      "Custom\\Scripts\\VamDeluxe\\Synthia\\src\\PathExt.cs",
+      "Custom\\Scripts\\VamDeluxe\\Synthia\\src\\Synthia.cs",
+      "Custom\\Scripts\\VamDeluxe\\Synthia\\Animations\\Idle.bvh",
+      "Custom\\Scripts\\VamDeluxe\\Synthia\\Animations\\Look.bvh",
+      "Custom\\Scripts\\VamDeluxe\\Synthia\\Animations\\StandToWalk.bvh",
+      "Custom\\Scripts\\VamDeluxe\\Synthia\\Animations\\WalkForward.bvh",
+      "Custom\\Scripts\\VamDeluxe\\Synthia\\Animations\\WalkForwardEasy.bvh",
+      "Custom\\Scripts\\VamDeluxe\\Synthia\\Animations\\WalkLoop.bvh",
+      "Custom\\Scripts\\VamDeluxe\\Synthia\\Synthia.cslist"
+   ], 
+   "dependencies" : { 
+   }
+}
