@@ -40,7 +40,6 @@ This plugin is built on the work by ElkVR.
         JSONStorableStringChooser walkAnimation;
         JSONStorableStringChooser forceAnimation;
 
-        JSONStorableFloat playbackSpeed;
         JSONStorableBool moveToTarget;
         JSONStorableFloat turnRate;
         JSONStorableFloat heelHeight;
@@ -48,7 +47,6 @@ This plugin is built on the work by ElkVR.
         JSONStorableBool ignoreFeetCollisions;
         JSONStorableBool useRecommendedPhyics;
         JSONStorableBool showTarget;
-        JSONStorableBool selectRandomAnimations;
 
         Animation forcePlayAnimation;
 
@@ -117,13 +115,6 @@ This plugin is built on the work by ElkVR.
                 #endregion
 
 
-                playbackSpeed = new JSONStorableFloat("playback speed", 1, (float speed)=>
-                {
-                    animator.playbackMultiplier = speed;
-                }, 0, 4, false);
-                RegisterFloat(playbackSpeed);
-                CreateSlider(playbackSpeed, true);
-
                 #region Walk Cycle
                 moveToTarget = new JSONStorableBool("walk to target", true);
                 RegisterBool(moveToTarget);
@@ -174,10 +165,6 @@ This plugin is built on the work by ElkVR.
                 CreateToggle(showTarget, true);
                 goalMarker = CreateMarker(containingAtom.transform);
 
-                selectRandomAnimations = new JSONStorableBool("select random animations", false);
-                RegisterBool(selectRandomAnimations);
-                CreateToggle(selectRandomAnimations, true);
-
                 #endregion
 
 
@@ -226,17 +213,6 @@ This plugin is built on the work by ElkVR.
             {
                 SetTargetVisibility(false);
             }
-
-            if(animator.finished && selectRandomAnimations.val)
-            {
-                var animationIds = animations.GetIdList();
-                if (animationIds.Count > 0)
-                {
-                    int index = UnityEngine.Random.Range(0, animationIds.Count);
-                    Animation animation = animations.Get(animationIds[index]);
-                    ForcePlayAnimation(animation);
-                }
-            }
         }
 
         void FixedUpdate()
@@ -247,9 +223,9 @@ This plugin is built on the work by ElkVR.
                 animator.ApplyRootMotion(0);
             }
 
-            if (moveToTarget.val)
+            if (forcePlayAnimation == null)
             {
-                if (forcePlayAnimation == null)
+                if (moveToTarget.val)
                 {
                     MoveTowardsGoal();
                     RotateToGoal();

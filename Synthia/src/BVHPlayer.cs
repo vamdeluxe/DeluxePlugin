@@ -52,11 +52,6 @@ namespace DeluxePlugin.Synthia
 
         public int frame = 0;
         public bool playing = false;
-        public bool finished = false;
-
-        float playStartTime = 0;
-
-        public float playbackMultiplier = 1;
 
         bool loopPlay = true;
         bool onlyHipTranslation = true;
@@ -96,8 +91,6 @@ namespace DeluxePlugin.Synthia
                 frame = 0;
                 //SuperController.LogMessage("restarting");
             }
-
-            playStartTime = Time.time;
 
             this.animation = animation;
             bvh = animation.bvh;
@@ -250,11 +243,6 @@ namespace DeluxePlugin.Synthia
 
                 rootMotion = new Vector3();
 
-                if (playing == false)
-                {
-                    return;
-                }
-
                 FrameAdvance();
 
                 foreach (var item in cnameToBname)
@@ -284,23 +272,12 @@ namespace DeluxePlugin.Synthia
         {
             if (playing)
             {
-                float elapsedTime = Time.time - playStartTime;
-                //SuperController.LogMessage("elapsed " + elapsedTime);
-                float duration = bvh.nFrames * bvh.frameTime;
-                //SuperController.LogMessage("duration " + duration);
-                float alpha = elapsedTime / duration;
-                //SuperController.LogMessage("alpha" + alpha);
-                int currentFrame = Mathf.RoundToInt(alpha * bvh.nFrames);
-
-                frame = currentFrame;
-
-                //elapsed += Time.deltaTime * playbackMultiplier;
-                //if (elapsed >= frameTime)
-                //{
-                //    int framesAdvanced = Mathf.FloorToInt(elapsed / frameTime);
-                //    frame += framesAdvanced;
-                //    elapsed = elapsed % frameTime;
-                //}
+                elapsed += Time.fixedDeltaTime;
+                if (elapsed >= frameTime)
+                {
+                    elapsed = 0;
+                    frame++;
+                }
             }
 
             if (frame < animation.startFrame)
@@ -308,9 +285,7 @@ namespace DeluxePlugin.Synthia
                 frame = animation.startFrame;
             }
 
-            finished = frame >= animation.endFrame;
-
-            if (finished)
+            if (frame >= animation.endFrame)
             {
                 if (loopPlay == false)
                 {
@@ -320,7 +295,6 @@ namespace DeluxePlugin.Synthia
                 else
                 {
                     frame = animation.startFrame;
-                    playStartTime = Time.time;
                 }
             }
 
