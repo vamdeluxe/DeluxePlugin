@@ -22,10 +22,21 @@ jobs:
         sed -i 's/v0.0.0/v${{ github.run_number }}/' publish/meta.json
         cd publish
         zip -r "LFE.Synthia.${{ github.run_number }}.var" *
-    - name: GitHub release
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+      with:
+        tag_name: synthia-${{ github.run_number }}
+        release_name: Release synthia-${{ github.run_number }}
+        draft: false
+        prerelease: false
+    - name: Upload VAR
       uses: softprops/action-gh-release@v1
       with:
-        draft: true
+        tag_name: synthia-${{ github.run_number }}
+        draft: false
         files: publish/LFE.Synthia.${{ github.run_number }}.var
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
