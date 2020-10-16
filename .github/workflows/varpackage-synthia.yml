@@ -2,6 +2,13 @@ name: Package Synthia
 
 on:
   workflow_dispatch:
+    inputs:
+      varAuthorPart:
+        required: true
+        default: 'LFE'
+      varNamePart:
+        required: true
+        default: 'Synthia'
 
 jobs:
   build:
@@ -20,23 +27,25 @@ jobs:
         cp Synthia/Synthia.cslist publish/Custom/Scripts/VamDeluxe/Synthia/
         cp Synthia/meta.json publish/
         sed -i 's/v0.0.0/v${{ github.run_number }}/' publish/meta.json
+        sed -i 's/__VARPACKAGECREATOR__/${{ github.event.inputs.varAuthorPart }}/' publish/meta.json
+        sed -i 's/__VARPACKAGENAME__/${{ github.event.inputs.varNamePart }}/' publish/meta.json
         cd publish
-        zip -r "LFE.Synthia.${{ github.run_number }}.var" *
+        zip -r "${{ github.event.inputs.varAuthorPart }}.${{ github.event.inputs.varNamePart }}.${{ github.run_number }}.var" *
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
       with:
-        tag_name: synthia-${{ github.run_number }}
-        release_name: Release synthia-${{ github.run_number }}
+        tag_name: ${{ github.event.inputs.varNamePart }}-${{ github.run_number }}
+        release_name: Release ${{ github.event.inputs.varNamePart }}-${{ github.run_number }}
         draft: false
         prerelease: false
     - name: Upload VAR
       uses: softprops/action-gh-release@v1
       with:
-        tag_name: synthia-${{ github.run_number }}
+        tag_name: ${{ github.event.inputs.varNamePart }}-${{ github.run_number }}
         draft: false
-        files: publish/LFE.Synthia.${{ github.run_number }}.var
+        files: publish/${{ github.event.inputs.varAuthorPart }}.${{ github.event.inputs.varNamePart }}.${{ github.run_number }}.var
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

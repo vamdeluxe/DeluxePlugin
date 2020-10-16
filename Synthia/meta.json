@@ -1,7 +1,7 @@
  { 
    "licenseType" : "CC BY-SA", 
-   "creatorName" : "LFE", 
-   "packageName" : "Synthia", 
+   "creatorName" : "__VARPACKAGECREATOR__", 
+   "packageName" : "__VARPACKAGENAME__", 
    "includeVersionsInReferences" : "true", 
    "description" : "Selected person will walk to where you want them.",
    "credits" : "VamDeluxe - original code.  ", 
