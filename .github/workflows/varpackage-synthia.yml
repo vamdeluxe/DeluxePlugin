@@ -8,7 +8,7 @@ on:
         default: 'LFE'
       varNamePart:
         required: true
-        default: 'Synthia'
+        default: 'Forked-VamDeluxe-Synthia'
 
 jobs:
   build:
