@@ -165,6 +165,32 @@ This plugin is built on the work by ElkVR.
                 CreateToggle(showTarget, true);
                 goalMarker = CreateMarker(containingAtom.transform);
 
+                // hidden list of atoms for use in trigger
+                JSONStorableStringChooser walkToAtom = null;
+                walkToAtom = new JSONStorableStringChooser("walk to atom", SuperController.singleton.GetAtomUIDs().OrderBy(s => s).ToList(), String.Empty, "walk to atom", (string atomUid) => {
+                    try {
+                        MoveToAtom(atomUid);
+                        // set to empty otherwise another call to this from a trigger will not register
+                        if(walkToAtom != null) {
+                            walkToAtom.valNoCallback = String.Empty;
+                        }
+                    }
+                    catch(Exception e) {
+                        SuperController.LogError(e.ToString());
+                    }
+                });
+                RegisterStringChooser(walkToAtom);
+                SuperController.singleton.onAtomUIDsChangedHandlers += (List<string> newList) => {
+                    try {
+                        if(walkToAtom != null) {
+                            walkToAtom.choices = newList.OrderBy(s => s).ToList();
+                        }
+                    }
+                    catch(Exception e) {
+                        SuperController.LogError(e.ToString());
+                    }
+                };
+
                 #endregion
 
 
@@ -290,6 +316,26 @@ This plugin is built on the work by ElkVR.
                 groundCollider = hit.collider;
                 goal = hit.point;
             }
+        }
+
+        void MoveToAtom(string atomUid) {
+            Atom atom = SuperController.singleton.GetAtomByUid(atomUid);
+
+            if(atom == null){
+                return;
+            }
+
+            if(atom.mainController != null) {
+                MoveToVector(atom.mainController.transform.position);
+            }
+            else {
+                MoveToVector(atom.transform.position);
+            }
+        }
+
+        void MoveToVector(Vector3 newGoal) {
+            goal = newGoal;
+            ClearForcePlayAnimation();
         }
 
         Transform CreateMarker(Transform parent)
