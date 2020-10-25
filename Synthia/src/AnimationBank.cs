@@ -29,10 +29,6 @@ namespace DeluxePlugin.Synthia
 
         public Animation Get(string id)
         {
-            if (bank.ContainsKey(id) == false)
-            {
-                return null;
-            }
             return bank[id];
         }
 

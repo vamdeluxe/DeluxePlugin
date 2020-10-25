@@ -1,0 +1,51 @@
+name: Package Synthia
+
+on:
+  workflow_dispatch:
+    inputs:
+      varAuthorPart:
+        required: true
+        default: 'LFE'
+      varNamePart:
+        required: true
+        default: 'Forked-VamDeluxe-Synthia'
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Zip the release package
+      id: zip
+      run: |
+        mkdir -p publish/Custom/Scripts/VamDeluxe/Synthia/src
+        mkdir -p publish/Custom/Scripts/VamDeluxe/Synthia/Animations
+        cp -r Synthia/src/* publish/Custom/Scripts/VamDeluxe/Synthia/src/
+        cp -r Synthia/Animations/* publish/Custom/Scripts/VamDeluxe/Synthia/Animations/
+        cp Synthia/Synthia.cslist publish/Custom/Scripts/VamDeluxe/Synthia/
+        cp Synthia/meta.json publish/
+        sed -i 's/v0.0.0/v${{ github.run_number }}/' publish/meta.json
+        sed -i 's/__VARPACKAGECREATOR__/${{ github.event.inputs.varAuthorPart }}/' publish/meta.json
+        sed -i 's/__VARPACKAGENAME__/${{ github.event.inputs.varNamePart }}/' publish/meta.json
+        cd publish
+        zip -r "${{ github.event.inputs.varAuthorPart }}.${{ github.event.inputs.varNamePart }}.${{ github.run_number }}.var" *
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+      with:
+        tag_name: ${{ github.event.inputs.varNamePart }}-${{ github.run_number }}
+        release_name: Release ${{ github.event.inputs.varNamePart }}-${{ github.run_number }}
+        draft: false
+        prerelease: false
+    - name: Upload VAR
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ github.event.inputs.varNamePart }}-${{ github.run_number }}
+        draft: false
+        files: publish/${{ github.event.inputs.varAuthorPart }}.${{ github.event.inputs.varNamePart }}.${{ github.run_number }}.var
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

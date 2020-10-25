@@ -92,8 +92,11 @@ namespace DeluxePlugin.Powertools {
             controller.meshScale = visible ? DEFAULT_SCALE : 0.0f;
 
             SphereCollider collider = controller.GetComponent<SphereCollider>();
-            collider.radius = visible ? 0.11f : 0.0f;
-            collider.enabled = visible;
+            if (collider)
+            {
+                collider.radius = visible ? 0.11f : 0.0f;
+                collider.enabled = visible;
+            }
 
             if (visible)
             {
